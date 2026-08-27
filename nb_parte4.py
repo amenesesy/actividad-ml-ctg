@@ -96,12 +96,12 @@ RES["k_codo"] = k_codo
 fig, ejes = plt.subplots(2, 3, figsize=(11.5, 6.0))
 
 paneles = [
-    ("Inercia", "Metodo del codo", "#4C72B0", None),
-    ("Silueta", "Coeficiente de silueta (mayor = mejor)", "#55A868", "max"),
-    ("Davies-Bouldin", "Indice Davies-Bouldin (menor = mejor)", "#C44E52", "min"),
-    ("Calinski-Harabasz", "Indice Calinski-Harabasz (mayor = mejor)", "#8172B2", "max"),
-    ("ARI vs NSP", "Rand ajustado frente a NSP (validacion externa)", "#CCB974", "max"),
-    ("NMI vs NSP", "Informacion mutua normalizada frente a NSP", "#64B5CD", "max"),
+    ("Inercia", "Metodo del codo", UNIR_CIAN, None),
+    ("Silueta", "Coeficiente de silueta (mayor = mejor)", UNIR_CIAN_OSC, "max"),
+    ("Davies-Bouldin", "Indice Davies-Bouldin (menor = mejor)", UNIR_ROJO, "min"),
+    ("Calinski-Harabasz", "Indice Calinski-Harabasz (mayor = mejor)", UNIR_GRIS, "max"),
+    ("ARI vs NSP", "Rand ajustado frente a NSP (validacion externa)", UNIR_AMBAR, "max"),
+    ("NMI vs NSP", "Informacion mutua normalizada frente a NSP", UNIR_CIAN_CLA, "max"),
 ]
 
 for eje, (columna, titulo, color, optimo) in zip(ejes.flatten(), paneles):
@@ -114,7 +114,7 @@ for eje, (columna, titulo, color, optimo) in zip(ejes.flatten(), paneles):
         k_opt = serie.idxmin()
     else:
         k_opt = k_codo
-    eje.axvline(k_opt, ls="--", color="grey", lw=1)
+    eje.axvline(k_opt, ls="--", color=UNIR_GRIS, lw=1)
     eje.set_title(titulo + "  (k = %d)" % k_opt, fontsize=10)
     eje.set_xlabel("Numero de grupos k")
     eje.set_xticks(list(RANGO_K))
@@ -185,7 +185,7 @@ for i, n in tamanos.items():
 print("\nSilueta global: %.4f" % silhouette_score(Z, etq_kmeans))
 
 plt.figure(figsize=(11, 3.1))
-sns.heatmap(centroides, annot=True, fmt=".2f", cmap="RdBu_r", center=0,
+sns.heatmap(centroides, annot=True, fmt=".2f", cmap=CMAP_DIV, center=0,
             vmin=-2.2, vmax=2.2, linewidths=0.4, annot_kws={"size": 8},
             cbar_kws={"label": "desviaciones tipicas"})
 plt.title("Perfil de los centroides de K-Means (k = 3)")
@@ -242,8 +242,8 @@ print("no es atribuible al azar.")
 fig, (a1, a2) = plt.subplots(1, 2, figsize=(11, 3.9))
 
 porcentajes.plot(kind="bar", stacked=True, ax=a1,
-                 color=["#55A868", "#DD8452", "#C44E52"], width=0.7)
-a1.axhline(100 * (y_nsp == 1).mean(), ls="--", color="black", lw=1,
+                 color=[UNIR_CIAN, UNIR_AMBAR, UNIR_ROJO], width=0.7)
+a1.axhline(100 * (y_nsp == 1).mean(), ls="--", color=UNIR_GRIS_OSC, lw=1,
            label="Tasa base de normales (%.0f %%)" % (100 * (y_nsp == 1).mean()))
 a1.set_ylabel("Composicion del grupo (%)")
 a1.set_xlabel("")
@@ -255,8 +255,8 @@ for g in range(K_ELEGIDO):
     m = etq_kmeans == g
     a2.scatter(Z2[m, 0], Z2[m, 1], s=7, alpha=0.6, label="Grupo %d (n=%d)" % (g, m.sum()))
 centros_2d = pca.transform(kmeans.cluster_centers_)[:, :2]
-a2.scatter(centros_2d[:, 0], centros_2d[:, 1], s=260, marker="X",
-           c="black", edgecolor="white", lw=1.5, label="Centroides", zorder=5)
+a2.scatter(centros_2d[:, 0], centros_2d[:, 1], s=130, marker="X",
+           c=UNIR_GRIS_OSC, edgecolor="white", lw=1.5, label="Centroides", zorder=5)
 a2.set_xlabel("CP1 (%.0f %% var.)" % (100 * pca.explained_variance_ratio_[0]))
 a2.set_ylabel("CP2 (%.0f %% var.)" % (100 * pca.explained_variance_ratio_[1]))
 a2.set_title("Grupos sobre las componentes principales")
@@ -361,8 +361,8 @@ distancias, _ = vecinos.kneighbors(Z_dbscan)
 k_dist = np.sort(distancias[:, -1])
 
 plt.figure(figsize=(6.5, 3.4))
-plt.plot(k_dist, lw=1.6, color="#4C72B0")
-plt.axhline(2.0, color="red", ls="--", lw=1, label="eps = 2.0 (valor elegido)")
+plt.plot(k_dist, lw=1.6, color=UNIR_CIAN)
+plt.axhline(2.0, color=UNIR_ROJO, ls="--", lw=1, label="eps = 2.0 (valor elegido)")
 plt.xlabel("Observaciones ordenadas por distancia")
 plt.ylabel("Distancia al vecino n. %d" % MIN_SAMPLES)
 plt.title("Grafico de k-distancias para la eleccion de eps")
@@ -458,7 +458,7 @@ fig, (a1, a2) = plt.subplots(1, 2, figsize=(11, 4.0))
 for g in sorted(set(etq_dbscan)):
     m = etq_dbscan == g
     if g == -1:
-        a1.scatter(Z2[m, 0], Z2[m, 1], s=14, c="#C44E52", marker="x",
+        a1.scatter(Z2[m, 0], Z2[m, 1], s=14, c=UNIR_ROJO, marker="x",
                    label="Ruido (n=%d)" % m.sum())
     else:
         a1.scatter(Z2[m, 0], Z2[m, 1], s=7, alpha=0.6, label="Grupo %d (n=%d)" % (g, m.sum()))
@@ -466,7 +466,7 @@ a1.set_xlabel("CP1"); a1.set_ylabel("CP2")
 a1.set_title("Resultado de DBSCAN (eps = %.1f, min_samples = %d)" % (EPS_ELEGIDO, MIN_SAMPLES))
 a1.legend(fontsize=9, markerscale=1.6)
 
-colores_nsp = {1: "#55A868", 2: "#DD8452", 3: "#C44E52"}
+colores_nsp = {1: UNIR_CIAN, 2: UNIR_AMBAR, 3: UNIR_ROJO}
 for v in [1, 2, 3]:
     m = y_nsp == v
     a2.scatter(Z2[m, 0], Z2[m, 1], s=7, alpha=0.65, c=colores_nsp[v],
@@ -653,7 +653,7 @@ for eje, (nombre, etiquetas) in zip(ejes, particiones):
     for g in sorted(set(etiquetas)):
         m = etiquetas == g
         if g == -1:
-            eje.scatter(Z2[m, 0], Z2[m, 1], s=12, c="#999999", marker="x", label="Ruido")
+            eje.scatter(Z2[m, 0], Z2[m, 1], s=12, c=UNIR_GRIS, marker="x", label="Ruido")
         else:
             eje.scatter(Z2[m, 0], Z2[m, 1], s=6, alpha=0.6, label="G%d" % g)
     eje.set_title("%s\nARI = %.3f" % (nombre, tabla_clustering.loc[nombre, "ARI vs NSP"]), fontsize=10)

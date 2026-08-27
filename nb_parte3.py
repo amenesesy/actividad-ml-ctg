@@ -124,14 +124,14 @@ print("Componentes necesarias para el 90 % de varianza:", n90)
 # Grafico de sedimentacion y varianza acumulada
 fig, (a1, a2) = plt.subplots(1, 2, figsize=(10, 3.5))
 
-a1.bar(range(1, len(varianza) + 1), 100 * varianza, color="#4C72B0")
+a1.bar(range(1, len(varianza) + 1), 100 * varianza, color=UNIR_CIAN)
 a1.set_xlabel("Componente principal")
 a1.set_ylabel("Varianza explicada (%)")
 a1.set_title("Grafico de sedimentacion")
 
-a2.plot(range(1, len(acumulada) + 1), 100 * acumulada, "o-", color="#C44E52")
-a2.axhline(80, ls="--", color="grey", lw=1)
-a2.axhline(90, ls=":", color="grey", lw=1)
+a2.plot(range(1, len(acumulada) + 1), 100 * acumulada, "o-", color=UNIR_CIAN_OSC)
+a2.axhline(80, ls="--", color=UNIR_GRIS, lw=1)
+a2.axhline(90, ls=":", color=UNIR_GRIS, lw=1)
 a2.set_xlabel("Numero de componentes")
 a2.set_ylabel("Varianza acumulada (%)")
 a2.set_title("Varianza acumulada")
@@ -309,18 +309,18 @@ cuantiles_teoricos = stats.chi2.ppf(
 
 plt.figure(figsize=(10, 3.8))
 plt.subplot(1, 2, 1)
-plt.plot(cuantiles_teoricos, np.sort(dist_mahalanobis), ".", ms=2.5, color="#4C72B0")
+plt.plot(cuantiles_teoricos, np.sort(dist_mahalanobis), ".", ms=2.5, color=UNIR_CIAN)
 lim = max(cuantiles_teoricos.max(), 120)
-plt.plot([0, lim], [0, lim], "r--", lw=1, label="Ajuste perfecto a chi2")
+plt.plot([0, lim], [0, lim], "--", color=UNIR_ROJO, lw=1, label="Ajuste perfecto a chi2")
 plt.xlim(0, lim); plt.ylim(0, np.percentile(dist_mahalanobis, 99.5))
 plt.xlabel("Cuantiles teoricos chi2"); plt.ylabel("Distancia de Mahalanobis al cuadrado")
 plt.title("Grafico Q-Q del supuesto de normalidad multivariante")
 plt.legend(fontsize=9)
 
 plt.subplot(1, 2, 2)
-plt.hist(dist_mahalanobis, bins=80, color="#55A868", range=(0, np.percentile(dist_mahalanobis, 99)))
-plt.axvline(umbral_5pct, color="red", ls="--", label="Umbral empirico 5 %")
-plt.axvline(umbral_chi2, color="orange", ls=":", label="Umbral chi2 0.975")
+plt.hist(dist_mahalanobis, bins=80, color=UNIR_CIAN, range=(0, np.percentile(dist_mahalanobis, 99)))
+plt.axvline(umbral_5pct, color=UNIR_ROJO, ls="--", label="Umbral empirico 5 %")
+plt.axvline(umbral_chi2, color=UNIR_AMBAR, ls=":", label="Umbral chi2 0.975")
 plt.xlabel("Distancia de Mahalanobis al cuadrado"); plt.ylabel("Frecuencia")
 plt.title("Distribucion de las distancias")
 plt.legend(fontsize=9)
@@ -551,16 +551,16 @@ for i, ni in enumerate(nombres):
 fig, (a1, a2) = plt.subplots(1, 2, figsize=(11, 4.0))
 
 sns.heatmap(pd.DataFrame(jaccard, index=nombres, columns=nombres), annot=True,
-            fmt=".2f", cmap="Blues", vmin=0, vmax=1, ax=a1,
+            fmt=".2f", cmap=CMAP_SEQ, vmin=0, vmax=1, ax=a1,
             cbar_kws={"label": "indice de Jaccard"}, annot_kws={"size": 9})
 a1.set_title("Concordancia entre detectores")
 a1.tick_params(axis="x", rotation=30, labelsize=8)
 a1.tick_params(axis="y", labelsize=8)
 
 orden = tabla_anomalias["Lift"].sort_values()
-colores = ["#C44E52" if v < 2 else "#DD8452" if v < 5 else "#55A868" for v in orden]
+colores = [UNIR_ROJO if v < 2 else UNIR_AMBAR if v < 5 else UNIR_CIAN for v in orden]
 a2.barh(orden.index, orden.values, color=colores)
-a2.axvline(1, color="black", ls="--", lw=1, label="Sin capacidad discriminante")
+a2.axvline(1, color=UNIR_GRIS_OSC, ls="--", lw=1, label="Sin capacidad discriminante")
 a2.set_xlabel("Lift sobre la tasa base de casos patologicos")
 a2.set_title("Utilidad clinica de cada detector")
 a2.tick_params(labelsize=9)
@@ -572,8 +572,8 @@ guardar("fig_anomalias_jaccard")
 fig, ejes = plt.subplots(1, 3, figsize=(12, 3.9))
 for eje, nombre in zip(ejes, ["Mahalanobis MCD (5 %)", "Isolation Forest (5 %)", "LOF k=20 (5 %)"]):
     m = DETECTORES[nombre]
-    eje.scatter(Z2[~m, 0], Z2[~m, 1], s=6, c="#BBBBBB", label="Normal", alpha=0.6)
-    eje.scatter(Z2[m, 0], Z2[m, 1], s=16, c="#C44E52", label="Anomalia", edgecolor="k", lw=0.2)
+    eje.scatter(Z2[~m, 0], Z2[~m, 1], s=6, c="#C9CDD1", label="Normal", alpha=0.6)
+    eje.scatter(Z2[m, 0], Z2[m, 1], s=16, c=UNIR_ROJO, label="Anomalia", edgecolor="k", lw=0.2)
     eje.set_title("%s\n%.0f %% de patologicos entre las marcadas"
                   % (nombre, tabla_anomalias.loc[nombre, "% patologicos"]), fontsize=10)
     eje.set_xlabel("CP1 (%.0f %% var.)" % (100 * pca.explained_variance_ratio_[0]))

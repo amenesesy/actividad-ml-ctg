@@ -209,7 +209,7 @@ mascara = np.triu(np.ones_like(corr, dtype=bool))   # oculta el triangulo superi
 # Se representa el color sin anotar cada coeficiente: con 21 variables son
 # 210 numeros que resultarian ilegibles al reducir la figura al ancho de la
 # pagina. Los pares fuertes se listan a continuacion en forma de tabla.
-sns.heatmap(corr, mask=mascara, annot=False, cmap="coolwarm",
+sns.heatmap(corr, mask=mascara, annot=False, cmap=CMAP_DIV,
             center=0, vmin=-1, vmax=1, linewidths=0.3,
             cbar_kws={"shrink": 0.8, "label": "r de Pearson"})
 plt.title("Matriz de correlaciones de las 21 variables descriptivas")
@@ -278,7 +278,7 @@ datos_validos = df_bruto[VARIABLES].dropna()
 # Histogramas con estimacion de densidad
 fig, ejes = plt.subplots(3, 4, figsize=(11, 6.6))
 for eje, col in zip(ejes.flatten(), VARS_CLAVE):
-    sns.histplot(datos_validos[col], bins=30, kde=True, ax=eje, color="#4C72B0")
+    sns.histplot(datos_validos[col], bins=30, kde=True, ax=eje, color=UNIR_CIAN)
     eje.set_title(col + "  (asimetria = %.2f)" % datos_validos[col].skew(), fontsize=10)
     eje.set_xlabel("")
     eje.set_ylabel("")
@@ -292,9 +292,9 @@ guardar("fig_distribuciones")
 datos_z = (datos_validos - datos_validos.mean()) / datos_validos.std()
 
 plt.figure(figsize=(10.5, 4.2))
-sns.boxplot(data=datos_z, orient="v", fliersize=1.5, color="#DD8452")
+sns.boxplot(data=datos_z, orient="v", fliersize=1.5, color=UNIR_CIAN_CLA)
 plt.xticks(rotation=90)
-plt.axhline(0, color="grey", lw=0.8)
+plt.axhline(0, color=UNIR_GRIS, lw=0.8)
 plt.ylabel("Valor estandarizado (z)")
 plt.title("Diagramas de caja de las 21 variables estandarizadas")
 plt.tight_layout()
@@ -561,7 +561,7 @@ def comparar_distribuciones(df_real, dict_imputados, columnas, ncols=4):
 
     for eje, col in zip(ejes, columnas):
         # Distribucion verdadera como referencia, con area rellena.
-        sns.kdeplot(df_real[col], ax=eje, color="black", lw=2,
+        sns.kdeplot(df_real[col], ax=eje, color=UNIR_GRIS_OSC, lw=2,
                     label="Original", fill=True, alpha=0.12)
         # Una curva por estrategia de imputacion.
         for nombre, X_rec in dict_imputados.items():

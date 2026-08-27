@@ -39,10 +39,10 @@ DIR_FIGURAS = pathlib.Path("figuras")
 
 TAM_CUERPO = 12                      # exigido: Calibri 12
 INTERLINEADO = round(TAM_CUERPO * 1.5)   # exigido: interlineado 1,5
-TAM_CODIGO = 5.9                     # monoespaciada para los listados de codigo
+TAM_CODIGO = 5.6                     # monoespaciada para los listados de codigo
 TAM_SALIDA = 6.2                     # monoespaciada para las salidas de consola
 MAX_LINEAS_SALIDA = 11               # recorte de salidas muy largas
-ANCHO_CODIGO = 136                   # caracteres antes de partir una linea
+ANCHO_CODIGO = 143                   # caracteres antes de partir una linea
 
 # Maquetacion de las figuras. La regla es que ninguna se reduzca por debajo
 # de REDUCCION_MAX respecto de su tamano natural, para que la tipografia
@@ -73,15 +73,24 @@ def registrar_fuentes():
 
 
 # ==================================================================== ESTILOS
-AZUL = colors.HexColor("#1F3864")
-GRIS_CODIGO = colors.HexColor("#F4F5F7")
-GRIS_SALIDA = colors.HexColor("#FBF8F1")
-BORDE_CODIGO = colors.HexColor("#C9CDD4")
+# Paleta de la plantilla Word de la actividad: el cian corporativo, el gris del
+# texto normal y el gris del pie de pagina.
+CIAN = "#0098CD"           # color corporativo: rotulos, titulos y bordes
+CIAN_CLARO = "#9CD4EA"     # tinte para rejillas y recuadros
+GRIS_TEXTO = "#333333"     # color del texto normal en el estilo Normal del Word
+GRIS_PIE = "#777777"       # color del pie de pagina en la plantilla
+
+AZUL = colors.HexColor(CIAN)                 # acento del documento
+FONDO_CODIGO = colors.HexColor("#F5F6F8")
+BORDE_CODIGO = colors.HexColor("#CCD1D6")
+FONDO_SALIDA = colors.HexColor("#EEF8FC")
+BORDE_SALIDA = colors.HexColor(CIAN_CLARO)
 
 
 def construir_estilos():
     """Devuelve el diccionario de estilos de parrafo del informe."""
-    base = dict(fontName="Calibri", fontSize=TAM_CUERPO, leading=INTERLINEADO)
+    base = dict(fontName="Calibri", fontSize=TAM_CUERPO, leading=INTERLINEADO,
+                textColor=colors.HexColor(GRIS_TEXTO))
     return {
         "cuerpo": ParagraphStyle("cuerpo", alignment=TA_JUSTIFY, spaceAfter=4, **base),
         # Sangria francesa de 1,25 cm en la lista de referencias, segun APA.
@@ -94,34 +103,44 @@ def construir_estilos():
                                rightIndent=10, spaceBefore=5, spaceAfter=8,
                                borderPadding=(6, 6, 6, 6), backColor=colors.HexColor("#EEF2F8"),
                                borderColor=colors.HexColor("#C3D0E6"), borderWidth=0.6, **base),
-        "h1": ParagraphStyle("h1", fontName="Calibri-B", fontSize=16, leading=20,
-                             textColor=AZUL, spaceBefore=10, spaceAfter=6),
-        "h2": ParagraphStyle("h2", fontName="Calibri-B", fontSize=13.5, leading=17,
-                             textColor=AZUL, spaceBefore=8, spaceAfter=4),
-        "h3": ParagraphStyle("h3", fontName="Calibri-B", fontSize=12.5, leading=16,
-                             textColor=colors.HexColor("#2E5090"), spaceBefore=7, spaceAfter=3),
+        # Jerarquia de titulos de la plantilla: apartado 1 en gris oscuro y
+        # cuerpo grande, apartado 2 en el cian corporativo y apartado 3 en
+        # negrita al tamano del texto normal.
+        "h1": ParagraphStyle("h1", fontName="Calibri", fontSize=18, leading=22,
+                             textColor=colors.HexColor(GRIS_TEXTO),
+                             spaceBefore=10, spaceAfter=6),
+        "h2": ParagraphStyle("h2", fontName="Calibri", fontSize=14, leading=18,
+                             textColor=colors.HexColor(CIAN), spaceBefore=8, spaceAfter=4),
+        "h3": ParagraphStyle("h3", fontName="Calibri-B", fontSize=12, leading=16,
+                             textColor=colors.HexColor(GRIS_TEXTO), spaceBefore=7, spaceAfter=3),
         "codigo": ParagraphStyle("codigo", fontName="Consolas", fontSize=TAM_CODIGO,
                                  leading=TAM_CODIGO + 0.9),
         "salida": ParagraphStyle("salida", fontName="Consolas", fontSize=TAM_SALIDA,
                                  leading=TAM_SALIDA + 0.9),
         # Formato APA de figuras: numero, titulo en cursiva, imagen y nota.
         "figura_numero": ParagraphStyle("figura_numero", fontName="Calibri-B", fontSize=10,
-                                        leading=12, spaceAfter=0),
+                                        leading=12, spaceAfter=0,
+                                        textColor=colors.HexColor(CIAN)),
         "figura_titulo": ParagraphStyle("figura_titulo", fontName="Calibri-I", fontSize=10,
-                                        leading=12, spaceAfter=4),
+                                        leading=12, spaceAfter=4,
+                                        textColor=colors.HexColor(GRIS_TEXTO)),
         "figura_nota": ParagraphStyle("figura_nota", fontName="Calibri", fontSize=8.5,
                                       leading=10.4, alignment=TA_JUSTIFY,
-                                      spaceBefore=2, spaceAfter=6),
+                                      spaceBefore=2, spaceAfter=6,
+                                      textColor=colors.HexColor(GRIS_PIE)),
         "tabla": ParagraphStyle("tabla", fontName="Calibri", fontSize=8.5,
                                 leading=10.5, alignment=TA_JUSTIFY),
         "tabla_cab": ParagraphStyle("tabla_cab", fontName="Calibri-B", fontSize=8.5,
                                     leading=10.5, textColor=colors.white),
-        "portada_titulo": ParagraphStyle("pt", fontName="Calibri-B", fontSize=25, leading=31,
-                                         alignment=TA_CENTER, textColor=AZUL, spaceAfter=14),
+        "portada_titulo": ParagraphStyle("pt", fontName="Calibri", fontSize=24, leading=30,
+                                         alignment=TA_CENTER,
+                                         textColor=colors.HexColor(CIAN), spaceAfter=14),
         "portada_sub": ParagraphStyle("ps", fontName="Calibri", fontSize=14, leading=21,
-                                      alignment=TA_CENTER, spaceAfter=6),
+                                      alignment=TA_CENTER, spaceAfter=6,
+                                      textColor=colors.HexColor(GRIS_PIE)),
         "portada_dato": ParagraphStyle("pd", fontName="Calibri", fontSize=12, leading=19,
-                                       alignment=TA_CENTER),
+                                       alignment=TA_CENTER,
+                                       textColor=colors.HexColor(GRIS_TEXTO)),
     }
 
 
@@ -140,10 +159,10 @@ def formato_inline(texto):
     texto = re.sub(r"(?<!\*)\*([^*\n]+)\*(?!\*)", r"<i>\1</i>", texto)
     # Enlaces [texto](url) -> texto subrayado en azul.
     texto = re.sub(r"\[([^\]]+)\]\(([^)]+)\)",
-                   r'<link href="\2" color="#1F4E9C">\1</link>', texto)
+                   r'<link href="\2" color="#0098CD">\1</link>', texto)
     # URLs sueltas que quedan en las referencias bibliograficas.
     texto = re.sub(r"(?<![\">])(https?://[^\s<]+)",
-                   r'<link href="\1" color="#1F4E9C">\1</link>', texto)
+                   r'<link href="\1" color="#0098CD">\1</link>', texto)
     return texto
 
 
@@ -209,8 +228,8 @@ def tabla_markdown(filas, estilos):
     tabla = Table(datos, colWidths=anchos, repeatRows=1)
     tabla.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), AZUL),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F2F5FA")]),
-        ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#B8C0CC")),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#EEF8FC")]),
+        ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor(CIAN_CLARO)),
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
         ("LEFTPADDING", (0, 0), (-1, -1), 4),
         ("RIGHTPADDING", (0, 0), (-1, -1), 4),
@@ -496,19 +515,101 @@ def flowable_figura(nombre, estilos, contador):
     ]
 
 
-# =========================================================== PIE DE PAGINA
-def pie_de_pagina(lienzo, documento):
-    """Dibuja el numero de pagina y una linea de identificacion del trabajo."""
+# ================================================= ENCABEZADO Y PIE DE PAGINA
+# Ambos reproducen la plantilla Word de la actividad. El encabezado es la tabla
+# de tres columnas con los bordes en el cian corporativo, y el pie combina la
+# linea gris con el nombre de la asignatura y la pestana cian con el numero de
+# pagina en blanco, anclada al margen derecho inferior.
+
+# Proporciones de las tres columnas, tomadas de los anchos del Word en twips:
+# 2552, 3827 y 1831 sobre un total de 8210.
+COLUMNAS_ENCABEZADO = (2552 / 8210, 3827 / 8210, 1831 / 8210)
+
+ALTO_FILA_ROTULO = 0.42 * cm     # fila con Asignatura / Datos del alumno / Fecha
+ALTO_FILA_DATO = 0.38 * cm       # cada una de las dos filas de datos
+MARGEN_ENCABEZADO = 0.75 * cm    # distancia del borde superior de la hoja
+
+ASIGNATURA = "Aprendizaje Automático"
+APELLIDOS = "Meneses Yupanqui"
+NOMBRE = "Abel"
+FECHA = "27/08/2026"
+
+
+def dibujar_encabezado(lienzo, documento):
+    """Dibuja la tabla de encabezado de la plantilla en la parte superior."""
+    izq = documento.leftMargin
+    ancho = documento.width
+    anchos = [ancho * f for f in COLUMNAS_ENCABEZADO]
+    x0, x1, x2, x3 = izq, izq + anchos[0], izq + anchos[0] + anchos[1], izq + ancho
+
+    alto_total = ALTO_FILA_ROTULO + 2 * ALTO_FILA_DATO
+    arriba = A4[1] - MARGEN_ENCABEZADO          # borde superior de la tabla
+    y_rotulos = arriba - ALTO_FILA_ROTULO       # linea bajo la fila de rotulos
+    y_medio = y_rotulos - ALTO_FILA_DATO        # separacion Apellidos / Nombre
+    abajo = arriba - alto_total
+
     lienzo.saveState()
-    lienzo.setFont("Calibri", 8.5)
-    lienzo.setFillColor(colors.HexColor("#7A7A7A"))
-    lienzo.drawString(2.0 * cm, 1.1 * cm,
-                      "Aprendizaje Automático  |  Detección de anomalías y agrupamiento (CTG)")
-    lienzo.drawRightString(A4[0] - 2.0 * cm, 1.1 * cm, "Página %d" % documento.page)
-    lienzo.setStrokeColor(colors.HexColor("#CCCCCC"))
-    lienzo.setLineWidth(0.4)
-    lienzo.line(2.0 * cm, 1.4 * cm, A4[0] - 2.0 * cm, 1.4 * cm)
+    lienzo.setStrokeColor(colors.HexColor(CIAN))
+    lienzo.setLineWidth(0.6)
+
+    # Recuadro exterior y separadores verticales.
+    lienzo.rect(x0, abajo, ancho, alto_total, stroke=1, fill=0)
+    lienzo.line(x1, abajo, x1, arriba)
+    lienzo.line(x2, abajo, x2, arriba)
+    # Linea horizontal bajo los rotulos y division interna de la columna central.
+    lienzo.line(x0, y_rotulos, x3, y_rotulos)
+    lienzo.line(x1, y_medio, x2, y_medio)
+
+    # Fila de rotulos, centrada y en el cian corporativo.
+    lienzo.setFont("Calibri", 10.5)
+    lienzo.setFillColor(colors.HexColor(CIAN))
+    base_rotulo = y_rotulos + 0.13 * cm
+    lienzo.drawCentredString((x0 + x1) / 2, base_rotulo, "Asignatura")
+    lienzo.drawCentredString((x1 + x2) / 2, base_rotulo, "Datos del alumno")
+    lienzo.drawCentredString((x2 + x3) / 2, base_rotulo, "Fecha")
+
+    # Celda de la asignatura: en negrita y centrada sobre las dos filas de datos.
+    lienzo.setFillColor(colors.HexColor(GRIS_TEXTO))
+    lienzo.setFont("Calibri-B", 10.5)
+    lienzo.drawCentredString((x0 + x1) / 2, abajo + ALTO_FILA_DATO - 0.02 * cm,
+                             ASIGNATURA)
+    # Celda de la fecha, tambien centrada verticalmente.
+    lienzo.setFont("Calibri", 10.5)
+    lienzo.drawCentredString((x2 + x3) / 2, abajo + ALTO_FILA_DATO - 0.02 * cm,
+                             FECHA)
+    # Columna central: apellidos arriba y nombre debajo.
+    lienzo.drawString(x1 + 0.18 * cm, y_medio + 0.13 * cm, "Apellidos: " + APELLIDOS)
+    lienzo.drawString(x1 + 0.18 * cm, abajo + 0.13 * cm, "Nombre: " + NOMBRE)
     lienzo.restoreState()
+
+
+def dibujar_pie(lienzo, documento):
+    """Dibuja el pie de la plantilla: linea gris y pestana cian con la pagina."""
+    lienzo.saveState()
+
+    # Linea con el nombre de la asignatura, alineada a la derecha y en gris.
+    lienzo.setFont("Calibri", 9)
+    lienzo.setFillColor(colors.HexColor(GRIS_PIE))
+    lienzo.drawRightString(documento.leftMargin + documento.width, 1.15 * cm,
+                           ASIGNATURA)
+
+    # Pestana cian anclada al margen derecho, con el numero de pagina en blanco.
+    ancho_pestana = 0.70 * cm
+    alto_pestana = 2.00 * cm
+    x = documento.leftMargin + documento.width + 0.40 * cm
+    lienzo.setFillColor(colors.HexColor(CIAN))
+    lienzo.rect(x, 0, ancho_pestana, alto_pestana, stroke=0, fill=1)
+    lienzo.setFillColor(colors.white)
+    lienzo.setFont("Calibri", 9)
+    lienzo.drawCentredString(x + ancho_pestana / 2, alto_pestana / 2 - 0.10 * cm,
+                             str(documento.page))
+    lienzo.restoreState()
+
+
+def decorar_pagina(lienzo, documento):
+    """Pinta el encabezado y el pie en cada pagina del informe."""
+    dibujar_encabezado(lienzo, documento)
+    dibujar_pie(lienzo, documento)
 
 
 # =================================================================== PORTADA
@@ -531,7 +632,7 @@ def portada(estilos):
                   "matplotlib y seaborn", estilos["portada_dato"]),
         Spacer(1, 1.2 * cm),
         Paragraph("<b>Código fuente:</b>", estilos["portada_dato"]),
-        Paragraph('<link href="%s" color="#1F4E9C">%s</link>' % (REPO_URL, REPO_URL),
+        Paragraph('<link href="%s" color="#0098CD">%s</link>' % (REPO_URL, REPO_URL),
                   estilos["portada_dato"]),
         Spacer(1, 2.2 * cm),
         Paragraph("Todo el código, las figuras y los resultados numéricos que "
@@ -577,7 +678,7 @@ def indice(estilos):
         "Las salidas de consola más extensas aparecen recortadas para respetar la "
         "extensión máxima que fija el enunciado. La versión completa, con todas "
         "las salidas y las figuras a resolución original, está disponible en el "
-        'repositorio público <link href="%s" color="#1F4E9C">%s</link>.'
+        'repositorio público <link href="%s" color="#0098CD">%s</link>.'
         % (REPO_URL, REPO_URL), estilos["cuerpo"]))
     return elementos
 
@@ -620,7 +721,7 @@ def main():
             ParagraphStyle("rot", parent=estilos["cuerpo"], fontSize=9, leading=11,
                            textColor=colors.HexColor("#444444"), spaceAfter=1)))
         elementos.append(bloque_monoespaciado(fuente, estilos["codigo"],
-                                              GRIS_CODIGO, BORDE_CODIGO, ANCHO_CODIGO))
+                                              FONDO_CODIGO, BORDE_CODIGO, ANCHO_CODIGO))
         elementos.append(Spacer(1, 4))
 
         # ---- Salida de consola -----------------------------------------------
@@ -628,7 +729,7 @@ def main():
         if salida:
             elementos.append(Spacer(1, 2))
             elementos.append(bloque_monoespaciado(salida, estilos["salida"],
-                                                  GRIS_SALIDA, colors.HexColor("#E0D8C8"),
+                                                  FONDO_SALIDA, BORDE_SALIDA,
                                                   int(ANCHO_CODIGO * 1.22)))
             elementos.append(Spacer(1, 6))
 
@@ -643,7 +744,7 @@ def main():
     documento = BaseDocTemplate(
         SALIDA, pagesize=A4,
         leftMargin=2.0 * cm, rightMargin=2.0 * cm,
-        topMargin=1.9 * cm, bottomMargin=1.9 * cm,
+        topMargin=2.25 * cm, bottomMargin=1.60 * cm,
         title="Deteccion de anomalias y tecnicas de agrupamiento (CTG)",
         author="Abel Meneses Yupanqui",
         subject="Actividad de Aprendizaje Automatico",
@@ -651,7 +752,7 @@ def main():
     marco = Frame(documento.leftMargin, documento.bottomMargin,
                   documento.width, documento.height, id="normal")
     documento.addPageTemplates([PageTemplate(id="principal", frames=[marco],
-                                             onPage=pie_de_pagina)])
+                                             onPage=decorar_pagina)])
     documento.build(elementos)
 
     tamano = pathlib.Path(SALIDA).stat().st_size / 1024

@@ -27,7 +27,11 @@ se descarga solo.
 `Actividad_ML_CTG_Meneses.pdf` es el informe final. Tiene 40 páginas, está
 compuesto en Calibri 12 con interlineado 1,5 y contiene la narrativa completa,
 todo el código Python comentado, las salidas que produce y las quince figuras
-en formato APA.
+en formato APA. Reproduce la plantilla del enunciado: el encabezado de tres
+columnas con la asignatura, los datos del alumno y la fecha, el pie con la
+pestaña del número de página, y la paleta institucional construida sobre el
+cian corporativo `#0098CD` y los grises `#333333` y `#777777`. Las figuras usan
+esa misma paleta.
 
 `ML_Actividad_CTG.ipynb` es el cuaderno ya ejecutado, con 60 celdas de las
 cuales 32 son de código, y conserva embebidas todas las salidas y los gráficos.

@@ -187,7 +187,35 @@ warnings.filterwarnings("ignore")             # silencia avisos de version
 pd.set_option("display.width", 140)           # ancho de impresion de los DataFrame
 pd.set_option("display.max_columns", 50)
 
-sns.set_theme(style="whitegrid", palette="deep")   # estilo homogeneo de figuras
+# Paleta institucional, tomada de la plantilla Word de la actividad: el cian
+# corporativo, los dos grises del texto y del pie, y dos tonos de apoyo para las
+# escalas de gravedad clinica.
+UNIR_CIAN = "#0098CD"      # color corporativo
+UNIR_CIAN_OSC = "#006E96"  # variante oscura, para segundas series
+UNIR_CIAN_CLA = "#7FD0EC"  # variante clara
+UNIR_GRIS = "#777777"      # gris del pie de pagina
+UNIR_GRIS_OSC = "#333333"  # color del texto normal
+UNIR_AMBAR = "#E8A33D"     # nivel intermedio en las escalas de gravedad
+UNIR_ROJO = "#C1272D"      # nivel alto en las escalas de gravedad
+
+PALETA_UNIR = [UNIR_CIAN, UNIR_ROJO, UNIR_GRIS, UNIR_CIAN_OSC, UNIR_AMBAR,
+               UNIR_GRIS_OSC, UNIR_CIAN_CLA]
+
+# Mapas de color derivados de la misma paleta. El divergente se usa en las
+# matrices de correlacion y de centroides; el secuencial, en la matriz de
+# concordancia entre detectores.
+from matplotlib.colors import LinearSegmentedColormap
+CMAP_DIV = LinearSegmentedColormap.from_list(
+    "unir_div", [UNIR_CIAN_OSC, UNIR_CIAN, "#FFFFFF", "#E38B8E", UNIR_ROJO])
+CMAP_SEQ = LinearSegmentedColormap.from_list(
+    "unir_seq", ["#FFFFFF", UNIR_CIAN_CLA, UNIR_CIAN, UNIR_CIAN_OSC])
+
+sns.set_theme(style="whitegrid", palette=PALETA_UNIR)   # estilo institucional
+plt.rcParams["text.color"] = UNIR_GRIS_OSC
+plt.rcParams["axes.labelcolor"] = UNIR_GRIS_OSC
+plt.rcParams["axes.titlecolor"] = UNIR_GRIS_OSC
+plt.rcParams["xtick.color"] = UNIR_GRIS_OSC
+plt.rcParams["ytick.color"] = UNIR_GRIS_OSC
 plt.rcParams["figure.dpi"] = 110
 plt.rcParams["savefig.dpi"] = 200      # resolucion suficiente para imprimir
 plt.rcParams["savefig.bbox"] = "tight"
