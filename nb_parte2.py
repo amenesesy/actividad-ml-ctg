@@ -204,12 +204,15 @@ VARIABLES = ["LB", "AC", "FM", "UC", "ASTV", "MSTV", "ALTV", "MLTV",
 # Se usan solo las filas validas; las 3 de artefacto se depuran en la seccion 3.
 corr = df_bruto[VARIABLES].dropna().corr(method="pearson")
 
-plt.figure(figsize=(11, 9))
+plt.figure(figsize=(9.5, 7.6))
 mascara = np.triu(np.ones_like(corr, dtype=bool))   # oculta el triangulo superior
-sns.heatmap(corr, mask=mascara, annot=True, fmt=".2f", cmap="coolwarm",
-            center=0, vmin=-1, vmax=1, linewidths=0.4,
-            annot_kws={"size": 6}, cbar_kws={"shrink": 0.75, "label": "r de Pearson"})
-plt.title("Matriz de correlaciones de las 21 variables descriptivas", fontsize=12)
+# Se representa el color sin anotar cada coeficiente: con 21 variables son
+# 210 numeros que resultarian ilegibles al reducir la figura al ancho de la
+# pagina. Los pares fuertes se listan a continuacion en forma de tabla.
+sns.heatmap(corr, mask=mascara, annot=False, cmap="coolwarm",
+            center=0, vmin=-1, vmax=1, linewidths=0.3,
+            cbar_kws={"shrink": 0.8, "label": "r de Pearson"})
+plt.title("Matriz de correlaciones de las 21 variables descriptivas")
 plt.tight_layout()
 guardar("fig_correlaciones")
 
@@ -273,10 +276,10 @@ VARS_CLAVE = ["LB", "ASTV", "MSTV", "ALTV", "MLTV", "AC",
 datos_validos = df_bruto[VARIABLES].dropna()
 
 # Histogramas con estimacion de densidad
-fig, ejes = plt.subplots(3, 4, figsize=(14, 8))
+fig, ejes = plt.subplots(3, 4, figsize=(11, 6.6))
 for eje, col in zip(ejes.flatten(), VARS_CLAVE):
     sns.histplot(datos_validos[col], bins=30, kde=True, ax=eje, color="#4C72B0")
-    eje.set_title(col + "  (asimetria = %.2f)" % datos_validos[col].skew(), fontsize=9)
+    eje.set_title(col + "  (asimetria = %.2f)" % datos_validos[col].skew(), fontsize=10)
     eje.set_xlabel("")
     eje.set_ylabel("")
 fig.suptitle("Distribucion de las variables mas relevantes", fontsize=13)
@@ -288,7 +291,7 @@ guardar("fig_distribuciones")
 # CANTIDAD de puntos que quedan fuera de los bigotes.
 datos_z = (datos_validos - datos_validos.mean()) / datos_validos.std()
 
-plt.figure(figsize=(13, 5))
+plt.figure(figsize=(10.5, 4.2))
 sns.boxplot(data=datos_z, orient="v", fliersize=1.5, color="#DD8452")
 plt.xticks(rotation=90)
 plt.axhline(0, color="grey", lw=0.8)
@@ -553,7 +556,7 @@ def comparar_distribuciones(df_real, dict_imputados, columnas, ncols=4):
         Numero de columnas de la rejilla de subgraficos.
     """
     nrows = int(np.ceil(len(columnas) / ncols))
-    fig, ejes = plt.subplots(nrows, ncols, figsize=(ncols * 3.6, nrows * 3.1))
+    fig, ejes = plt.subplots(nrows, ncols, figsize=(ncols * 2.9, nrows * 2.7))
     ejes = np.atleast_1d(ejes).flatten()
 
     for eje, col in zip(ejes, columnas):
@@ -566,7 +569,7 @@ def comparar_distribuciones(df_real, dict_imputados, columnas, ncols=4):
         eje.set_title(col, fontsize=10)
         eje.set_xlabel("")
         eje.set_ylabel("")
-        eje.legend(fontsize=6)
+        eje.legend(fontsize=8)
 
     # Se eliminan los ejes sobrantes de la rejilla.
     for eje in ejes[len(columnas):]:

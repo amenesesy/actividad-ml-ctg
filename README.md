@@ -1,11 +1,26 @@
 # Detección de anomalías y técnicas de agrupamiento sobre el conjunto de datos CTG
 
+[![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/amenesesy/actividad-ml-ctg/blob/main/ML_Actividad_CTG.ipynb)
+
 Actividad de la asignatura **Aprendizaje Automático** de la Maestría en
 Inteligencia Artificial. El trabajo aplica el flujo completo de aprendizaje no
 supervisado al conjunto de datos de cardiotocografía `CTG.csv`, que reúne 2 126
 registros de monitoreo fetal descritos por 21 variables cuantitativas.
 
 Autor: Abel Meneses Yupanqui.
+
+## Ejecución en Google Colab
+
+Pulsando el distintivo de arriba el cuaderno se abre en Google Colab y puede
+ejecutarse de principio a fin sin instalar nada. La primera celda detecta el
+entorno, comprueba que estén las librerías necesarias, instala las que falten y
+descarga `CTG.csv` desde este mismo repositorio. La ejecución completa tarda
+alrededor de dos minutos y deja en el directorio de trabajo las quince figuras
+y el archivo `resultados.json`.
+
+El mismo cuaderno funciona sin cambios en una instalación local; en ese caso
+basta con tener `CTG.csv` junto al archivo `.ipynb`, aunque si no está también
+se descarga solo.
 
 ## Contenido del repositorio
 
@@ -14,8 +29,8 @@ compuesto en Calibri 12 con interlineado 1,5 y contiene la narrativa completa,
 todo el código Python comentado, las salidas que produce y las quince figuras
 en formato APA.
 
-`ML_Actividad_CTG.ipynb` es el cuaderno ya ejecutado, con 59 celdas de las
-cuales 31 son de código, y conserva embebidas todas las salidas y los gráficos.
+`ML_Actividad_CTG.ipynb` es el cuaderno ya ejecutado, con 60 celdas de las
+cuales 32 son de código, y conserva embebidas todas las salidas y los gráficos.
 
 `resultados.json` recoge los resultados numéricos que el cuaderno vuelca al
 terminar, y `figuras/` contiene las quince figuras en PNG a su resolución

@@ -39,10 +39,18 @@ DIR_FIGURAS = pathlib.Path("figuras")
 
 TAM_CUERPO = 12                      # exigido: Calibri 12
 INTERLINEADO = round(TAM_CUERPO * 1.5)   # exigido: interlineado 1,5
-TAM_CODIGO = 6.2                     # monoespaciada para los listados de codigo
+TAM_CODIGO = 5.9                     # monoespaciada para los listados de codigo
 TAM_SALIDA = 6.2                     # monoespaciada para las salidas de consola
-MAX_LINEAS_SALIDA = 9               # recorte de salidas muy largas
-ANCHO_CODIGO = 132                   # caracteres antes de partir una linea
+MAX_LINEAS_SALIDA = 11               # recorte de salidas muy largas
+ANCHO_CODIGO = 136                   # caracteres antes de partir una linea
+
+# Maquetacion de las figuras. La regla es que ninguna se reduzca por debajo
+# de REDUCCION_MAX respecto de su tamano natural, para que la tipografia
+# interior siga siendo legible en papel.
+ANCHO_TEXTO = 17.0 * cm               # ancho util de la caja de texto
+DPI_FIGURAS = 200                     # resolucion con la que se guardan
+REDUCCION_MAX = 0.68                  # reduccion maxima admitida
+ALTO_MAX_FIGURA = 9.5 * cm           # alto maximo de una figura
 
 FUENTES = {
     "Calibri":   "C:/Windows/Fonts/calibri.ttf",
@@ -75,9 +83,9 @@ def construir_estilos():
     """Devuelve el diccionario de estilos de parrafo del informe."""
     base = dict(fontName="Calibri", fontSize=TAM_CUERPO, leading=INTERLINEADO)
     return {
-        "cuerpo": ParagraphStyle("cuerpo", alignment=TA_JUSTIFY, spaceAfter=5, **base),
+        "cuerpo": ParagraphStyle("cuerpo", alignment=TA_JUSTIFY, spaceAfter=4, **base),
         # Sangria francesa de 1,25 cm en la lista de referencias, segun APA.
-        "referencia": ParagraphStyle("referencia", alignment=0, spaceAfter=7,
+        "referencia": ParagraphStyle("referencia", alignment=0, spaceAfter=2,
                                      leftIndent=1.25 * cm,
                                      firstLineIndent=-1.25 * cm, **base),
         "lista": ParagraphStyle("lista", alignment=TA_JUSTIFY, leftIndent=16,
@@ -101,9 +109,9 @@ def construir_estilos():
                                         leading=12, spaceAfter=0),
         "figura_titulo": ParagraphStyle("figura_titulo", fontName="Calibri-I", fontSize=10,
                                         leading=12, spaceAfter=4),
-        "figura_nota": ParagraphStyle("figura_nota", fontName="Calibri", fontSize=9,
-                                      leading=11, alignment=TA_JUSTIFY,
-                                      spaceBefore=2, spaceAfter=7),
+        "figura_nota": ParagraphStyle("figura_nota", fontName="Calibri", fontSize=8.5,
+                                      leading=10.4, alignment=TA_JUSTIFY,
+                                      spaceBefore=2, spaceAfter=6),
         "tabla": ParagraphStyle("tabla", fontName="Calibri", fontSize=8.5,
                                 leading=10.5, alignment=TA_JUSTIFY),
         "tabla_cab": ParagraphStyle("tabla_cab", fontName="Calibri-B", fontSize=8.5,
@@ -167,7 +175,7 @@ def bloque_monoespaciado(texto, estilo, fondo, borde, ancho_max):
         lineas.extend(partir_linea_larga(linea.rstrip(), ancho_max))
 
     datos = [[Preformatted(linea if linea else " ", estilo)] for linea in lineas]
-    tabla = Table(datos, colWidths=[16.6 * cm], splitByRow=1)
+    tabla = Table(datos, colWidths=[17.0 * cm], splitByRow=1)
     tabla.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, -1), fondo),
         ("BOX", (0, 0), (-1, -1), 0.6, borde),
@@ -190,7 +198,7 @@ def tabla_markdown(filas, estilos):
         datos.append([Paragraph(formato_inline(c), estilo) for c in fila])
 
     # Reparto de anchos: la primera columna algo mas estrecha que las de texto.
-    ancho_total = 16.6 * cm
+    ancho_total = 17.0 * cm
     if n_col <= 2:
         pesos = [1.0] * n_col
     else:
@@ -371,7 +379,9 @@ FIGURAS_APA = {
         "Matriz de correlaciones de las 21 variables descriptivas",
         "Coeficientes de correlación de Pearson calculados sobre las 2 126 "
         "observaciones válidas. Solo se representa el triángulo inferior para "
-        "evitar la duplicación de cada par. Elaboración propia."),
+        "evitar la duplicación de cada par. El valor numérico de los pares más "
+        "correlacionados aparece en la salida que precede a la figura. "
+        "Elaboración propia."),
     "fig_distribuciones": (
         "Distribución de las variables más relevantes",
         "Histogramas con estimación de densidad por núcleos. Entre paréntesis "
@@ -458,12 +468,20 @@ def flowable_figura(nombre, estilos, contador):
         return []
     from reportlab.lib.utils import ImageReader
     ancho_px, alto_px = ImageReader(str(ruta)).getSize()
-    ancho = 11.3 * cm
+
+    # Tamano natural de la figura en centimetros, a partir de la resolucion con
+    # la que matplotlib la guardo.
+    ancho_natural = (ancho_px / DPI_FIGURAS) * 2.54 * cm
+
+    # La figura se imprime a su tamano natural reducido como mucho al factor
+    # REDUCCION_MAX, de modo que la tipografia interior siga siendo legible, y
+    # sin sobrepasar nunca el ancho de la caja de texto.
+    ancho = min(ANCHO_TEXTO, ancho_natural * REDUCCION_MAX)
     alto = ancho * alto_px / ancho_px
-    # Ninguna figura debe ocupar mas de media pagina util.
-    alto_max = 6.6 * cm
-    if alto > alto_max:
-        alto = alto_max
+
+    # Ninguna figura debe ocupar mas de la mitad larga de la pagina util.
+    if alto > ALTO_MAX_FIGURA:
+        alto = ALTO_MAX_FIGURA
         ancho = alto * ancho_px / alto_px
 
     titulo, nota = FIGURAS_APA.get(nombre, (nombre, "Elaboración propia."))
@@ -484,12 +502,12 @@ def pie_de_pagina(lienzo, documento):
     lienzo.saveState()
     lienzo.setFont("Calibri", 8.5)
     lienzo.setFillColor(colors.HexColor("#7A7A7A"))
-    lienzo.drawString(2.2 * cm, 1.2 * cm,
+    lienzo.drawString(2.0 * cm, 1.1 * cm,
                       "Aprendizaje Automático  |  Detección de anomalías y agrupamiento (CTG)")
-    lienzo.drawRightString(A4[0] - 2.2 * cm, 1.2 * cm, "Página %d" % documento.page)
+    lienzo.drawRightString(A4[0] - 2.0 * cm, 1.1 * cm, "Página %d" % documento.page)
     lienzo.setStrokeColor(colors.HexColor("#CCCCCC"))
     lienzo.setLineWidth(0.4)
-    lienzo.line(2.2 * cm, 1.5 * cm, A4[0] - 2.2 * cm, 1.5 * cm)
+    lienzo.line(2.0 * cm, 1.4 * cm, A4[0] - 2.0 * cm, 1.4 * cm)
     lienzo.restoreState()
 
 
@@ -583,8 +601,10 @@ def main():
         fuente = "".join(celda["source"])
 
         if celda["cell_type"] == "markdown":
-            # La portada del notebook se sustituye por la portada del PDF.
-            if fuente.lstrip().startswith("# Deteccion de anomalias y tecnicas"):
+            # Las celdas marcadas como exclusivas del cuaderno, como la portada
+            # con el distintivo de Google Colab, no se reproducen en el PDF,
+            # que lleva su propia portada.
+            if "<!-- solo-notebook -->" in fuente:
                 continue
             elementos += renderizar_markdown(fuente, estilos)
             continue
@@ -594,11 +614,11 @@ def main():
         titulo = re.search(r"^# Celda ([\d.]+)\.\s*(.+?)\.?$", fuente, flags=re.M)
         rotulo = ("Celda %s. %s" % (titulo.group(1), titulo.group(2))
                   if titulo else "Código %d" % n_listado)
-        elementos.append(Spacer(1, 3))
+        elementos.append(Spacer(1, 2))
         elementos.append(Paragraph(
             "<b>Listado %d.</b> %s" % (n_listado, html.escape(rotulo)),
-            ParagraphStyle("rot", parent=estilos["cuerpo"], fontSize=9.5, leading=13,
-                           textColor=colors.HexColor("#444444"), spaceAfter=3)))
+            ParagraphStyle("rot", parent=estilos["cuerpo"], fontSize=9, leading=11,
+                           textColor=colors.HexColor("#444444"), spaceAfter=1)))
         elementos.append(bloque_monoespaciado(fuente, estilos["codigo"],
                                               GRIS_CODIGO, BORDE_CODIGO, ANCHO_CODIGO))
         elementos.append(Spacer(1, 4))
@@ -606,10 +626,7 @@ def main():
         # ---- Salida de consola -----------------------------------------------
         salida = texto_de_salidas(celda)
         if salida:
-            elementos.append(Paragraph(
-                "<b>Salida</b>",
-                ParagraphStyle("rs", parent=estilos["cuerpo"], fontSize=9.5, leading=13,
-                               textColor=colors.HexColor("#444444"), spaceAfter=3)))
+            elementos.append(Spacer(1, 2))
             elementos.append(bloque_monoespaciado(salida, estilos["salida"],
                                                   GRIS_SALIDA, colors.HexColor("#E0D8C8"),
                                                   int(ANCHO_CODIGO * 1.22)))
@@ -625,8 +642,8 @@ def main():
     # ---- Documento -----------------------------------------------------------
     documento = BaseDocTemplate(
         SALIDA, pagesize=A4,
-        leftMargin=2.2 * cm, rightMargin=2.2 * cm,
-        topMargin=2.0 * cm, bottomMargin=2.0 * cm,
+        leftMargin=2.0 * cm, rightMargin=2.0 * cm,
+        topMargin=1.9 * cm, bottomMargin=1.9 * cm,
         title="Deteccion de anomalias y tecnicas de agrupamiento (CTG)",
         author="Abel Meneses Yupanqui",
         subject="Actividad de Aprendizaje Automatico",

@@ -93,7 +93,7 @@ RES["k_codo"] = k_codo
 #   externos, para que el conflicto entre ellos resulte visible de un vistazo.
 # Salidas: la figura fig_kmeans_seleccion.
 
-fig, ejes = plt.subplots(2, 3, figsize=(14, 7))
+fig, ejes = plt.subplots(2, 3, figsize=(11.5, 6.0))
 
 paneles = [
     ("Inercia", "Metodo del codo", "#4C72B0", None),
@@ -115,7 +115,7 @@ for eje, (columna, titulo, color, optimo) in zip(ejes.flatten(), paneles):
     else:
         k_opt = k_codo
     eje.axvline(k_opt, ls="--", color="grey", lw=1)
-    eje.set_title(titulo + "  (k = %d)" % k_opt, fontsize=9)
+    eje.set_title(titulo + "  (k = %d)" % k_opt, fontsize=10)
     eje.set_xlabel("Numero de grupos k")
     eje.set_xticks(list(RANGO_K))
 
@@ -184,10 +184,10 @@ for i, n in tamanos.items():
     print("  Grupo %d: %4d observaciones (%.1f %%)" % (i, n, 100 * n / len(Z)))
 print("\nSilueta global: %.4f" % silhouette_score(Z, etq_kmeans))
 
-plt.figure(figsize=(13, 3.6))
+plt.figure(figsize=(11, 3.1))
 sns.heatmap(centroides, annot=True, fmt=".2f", cmap="RdBu_r", center=0,
-            vmin=-2.2, vmax=2.2, linewidths=0.4, annot_kws={"size": 7},
-            cbar_kws={"label": "desviaciones tipicas respecto a la media"})
+            vmin=-2.2, vmax=2.2, linewidths=0.4, annot_kws={"size": 8},
+            cbar_kws={"label": "desviaciones tipicas"})
 plt.title("Perfil de los centroides de K-Means (k = 3)")
 plt.tight_layout()
 guardar("fig_kmeans_perfil")
@@ -239,7 +239,7 @@ print("  Chi-cuadrado de independencia : %.1f (gl = %d), p = %.3e" % (chi2, gl, 
 print("\nCon p < 0.001, la asociacion entre los grupos y el diagnostico clinico")
 print("no es atribuible al azar.")
 
-fig, (a1, a2) = plt.subplots(1, 2, figsize=(13, 4.4))
+fig, (a1, a2) = plt.subplots(1, 2, figsize=(11, 3.9))
 
 porcentajes.plot(kind="bar", stacked=True, ax=a1,
                  color=["#55A868", "#DD8452", "#C44E52"], width=0.7)
@@ -249,7 +249,7 @@ a1.set_ylabel("Composicion del grupo (%)")
 a1.set_xlabel("")
 a1.set_title("Composicion diagnostica de cada grupo")
 a1.tick_params(axis="x", rotation=0)
-a1.legend(fontsize=8, loc="lower right")
+a1.legend(fontsize=9, loc="lower right")
 
 for g in range(K_ELEGIDO):
     m = etq_kmeans == g
@@ -260,7 +260,7 @@ a2.scatter(centros_2d[:, 0], centros_2d[:, 1], s=260, marker="X",
 a2.set_xlabel("CP1 (%.0f %% var.)" % (100 * pca.explained_variance_ratio_[0]))
 a2.set_ylabel("CP2 (%.0f %% var.)" % (100 * pca.explained_variance_ratio_[1]))
 a2.set_title("Grupos sobre las componentes principales")
-a2.legend(fontsize=8, markerscale=1.8)
+a2.legend(fontsize=9, markerscale=1.8)
 plt.tight_layout()
 guardar("fig_kmeans_nsp")
 
@@ -360,13 +360,13 @@ vecinos = NearestNeighbors(n_neighbors=MIN_SAMPLES).fit(Z_dbscan)
 distancias, _ = vecinos.kneighbors(Z_dbscan)
 k_dist = np.sort(distancias[:, -1])
 
-plt.figure(figsize=(7, 4))
+plt.figure(figsize=(6.5, 3.4))
 plt.plot(k_dist, lw=1.6, color="#4C72B0")
 plt.axhline(2.0, color="red", ls="--", lw=1, label="eps = 2.0 (valor elegido)")
 plt.xlabel("Observaciones ordenadas por distancia")
 plt.ylabel("Distancia al vecino n. %d" % MIN_SAMPLES)
 plt.title("Grafico de k-distancias para la eleccion de eps")
-plt.legend(fontsize=8)
+plt.legend(fontsize=9)
 plt.tight_layout()
 guardar("fig_dbscan_kdist")
 
@@ -453,7 +453,7 @@ print("\nCoincidencia entre el ruido de DBSCAN y las anomalias de Isolation Fore
 print("  Indice de Jaccard: %.3f" % jaccard_ruido)
 print("  Puntos marcados por ambos metodos: %d" % (ruido_db & anom_iforest).sum())
 
-fig, (a1, a2) = plt.subplots(1, 2, figsize=(13, 4.6))
+fig, (a1, a2) = plt.subplots(1, 2, figsize=(11, 4.0))
 
 for g in sorted(set(etq_dbscan)):
     m = etq_dbscan == g
@@ -464,7 +464,7 @@ for g in sorted(set(etq_dbscan)):
         a1.scatter(Z2[m, 0], Z2[m, 1], s=7, alpha=0.6, label="Grupo %d (n=%d)" % (g, m.sum()))
 a1.set_xlabel("CP1"); a1.set_ylabel("CP2")
 a1.set_title("Resultado de DBSCAN (eps = %.1f, min_samples = %d)" % (EPS_ELEGIDO, MIN_SAMPLES))
-a1.legend(fontsize=8, markerscale=1.6)
+a1.legend(fontsize=9, markerscale=1.6)
 
 colores_nsp = {1: "#55A868", 2: "#DD8452", 3: "#C44E52"}
 for v in [1, 2, 3]:
@@ -473,7 +473,7 @@ for v in [1, 2, 3]:
                label="%s (n=%d)" % (NOMBRES_NSP[v], m.sum()))
 a2.set_xlabel("CP1"); a2.set_ylabel("CP2")
 a2.set_title("Referencia: diagnostico real NSP")
-a2.legend(fontsize=8, markerscale=1.8)
+a2.legend(fontsize=9, markerscale=1.8)
 plt.tight_layout()
 guardar("fig_dbscan")
 
@@ -529,9 +529,9 @@ grupo indiferenciado.
 # proximo al que emplea K-Means.
 matriz_enlace = linkage(Z, method="ward")
 
-plt.figure(figsize=(13, 4.6))
+plt.figure(figsize=(11, 4.0))
 dendrogram(matriz_enlace, truncate_mode="lastp", p=30, leaf_rotation=90,
-           leaf_font_size=8, show_contracted=True, color_threshold=70)
+           leaf_font_size=9, show_contracted=True, color_threshold=70)
 plt.title("Dendrograma del agrupamiento jerarquico (enlace de Ward)")
 plt.xlabel("Grupos; el numero entre parentesis indica cuantas observaciones agrupa")
 plt.ylabel("Distancia de fusion (incremento de varianza)")
@@ -643,7 +643,7 @@ print("COMPARACION FINAL DE LOS ALGORITMOS DE AGRUPAMIENTO")
 print("=" * 100)
 print(tabla_clustering.to_string())
 
-fig, ejes = plt.subplots(1, 3, figsize=(15, 4.6))
+fig, ejes = plt.subplots(1, 3, figsize=(12, 3.9))
 particiones = [
     ("K-Means (k=3)", etq_kmeans),
     ("DBSCAN (eps=2.0)", etq_dbscan),
@@ -658,7 +658,7 @@ for eje, (nombre, etiquetas) in zip(ejes, particiones):
             eje.scatter(Z2[m, 0], Z2[m, 1], s=6, alpha=0.6, label="G%d" % g)
     eje.set_title("%s\nARI = %.3f" % (nombre, tabla_clustering.loc[nombre, "ARI vs NSP"]), fontsize=10)
     eje.set_xlabel("CP1"); eje.set_ylabel("CP2")
-    eje.legend(fontsize=7, markerscale=1.8)
+    eje.legend(fontsize=9, markerscale=1.8)
 fig.suptitle("Los tres agrupamientos sobre el mismo plano de componentes principales", fontsize=12)
 plt.tight_layout()
 guardar("fig_clustering_comparacion")

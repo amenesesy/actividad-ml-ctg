@@ -122,7 +122,7 @@ print("\nComponentes necesarias para el 80 % de varianza:", n80)
 print("Componentes necesarias para el 90 % de varianza:", n90)
 
 # Grafico de sedimentacion y varianza acumulada
-fig, (a1, a2) = plt.subplots(1, 2, figsize=(12, 4))
+fig, (a1, a2) = plt.subplots(1, 2, figsize=(10, 3.5))
 
 a1.bar(range(1, len(varianza) + 1), 100 * varianza, color="#4C72B0")
 a1.set_xlabel("Componente principal")
@@ -307,7 +307,7 @@ print("  marca %d filas (%.1f %% del conjunto)"
 cuantiles_teoricos = stats.chi2.ppf(
     (np.arange(len(Z)) + 0.5) / len(Z), df=len(VARIABLES_MODELO))
 
-plt.figure(figsize=(11, 4))
+plt.figure(figsize=(10, 3.8))
 plt.subplot(1, 2, 1)
 plt.plot(cuantiles_teoricos, np.sort(dist_mahalanobis), ".", ms=2.5, color="#4C72B0")
 lim = max(cuantiles_teoricos.max(), 120)
@@ -315,7 +315,7 @@ plt.plot([0, lim], [0, lim], "r--", lw=1, label="Ajuste perfecto a chi2")
 plt.xlim(0, lim); plt.ylim(0, np.percentile(dist_mahalanobis, 99.5))
 plt.xlabel("Cuantiles teoricos chi2"); plt.ylabel("Distancia de Mahalanobis al cuadrado")
 plt.title("Grafico Q-Q del supuesto de normalidad multivariante")
-plt.legend(fontsize=8)
+plt.legend(fontsize=9)
 
 plt.subplot(1, 2, 2)
 plt.hist(dist_mahalanobis, bins=80, color="#55A868", range=(0, np.percentile(dist_mahalanobis, 99)))
@@ -323,7 +323,7 @@ plt.axvline(umbral_5pct, color="red", ls="--", label="Umbral empirico 5 %")
 plt.axvline(umbral_chi2, color="orange", ls=":", label="Umbral chi2 0.975")
 plt.xlabel("Distancia de Mahalanobis al cuadrado"); plt.ylabel("Frecuencia")
 plt.title("Distribucion de las distancias")
-plt.legend(fontsize=8)
+plt.legend(fontsize=9)
 plt.tight_layout()
 guardar("fig_mahalanobis")
 
@@ -548,14 +548,14 @@ for i, ni in enumerate(nombres):
         a, b = DETECTORES[ni], DETECTORES[nj]
         jaccard[i, j] = (a & b).sum() / max((a | b).sum(), 1)
 
-fig, (a1, a2) = plt.subplots(1, 2, figsize=(13, 4.6))
+fig, (a1, a2) = plt.subplots(1, 2, figsize=(11, 4.0))
 
 sns.heatmap(pd.DataFrame(jaccard, index=nombres, columns=nombres), annot=True,
             fmt=".2f", cmap="Blues", vmin=0, vmax=1, ax=a1,
-            cbar_kws={"label": "indice de Jaccard"}, annot_kws={"size": 8})
+            cbar_kws={"label": "indice de Jaccard"}, annot_kws={"size": 9})
 a1.set_title("Concordancia entre detectores")
-a1.tick_params(axis="x", rotation=35, labelsize=7)
-a1.tick_params(axis="y", labelsize=7)
+a1.tick_params(axis="x", rotation=30, labelsize=8)
+a1.tick_params(axis="y", labelsize=8)
 
 orden = tabla_anomalias["Lift"].sort_values()
 colores = ["#C44E52" if v < 2 else "#DD8452" if v < 5 else "#55A868" for v in orden]
@@ -563,22 +563,22 @@ a2.barh(orden.index, orden.values, color=colores)
 a2.axvline(1, color="black", ls="--", lw=1, label="Sin capacidad discriminante")
 a2.set_xlabel("Lift sobre la tasa base de casos patologicos")
 a2.set_title("Utilidad clinica de cada detector")
-a2.tick_params(labelsize=8)
-a2.legend(fontsize=8)
+a2.tick_params(labelsize=9)
+a2.legend(fontsize=9)
 plt.tight_layout()
 guardar("fig_anomalias_jaccard")
 
 # Proyeccion PCA de las anomalias de los tres metodos multivariantes.
-fig, ejes = plt.subplots(1, 3, figsize=(15, 4.6))
+fig, ejes = plt.subplots(1, 3, figsize=(12, 3.9))
 for eje, nombre in zip(ejes, ["Mahalanobis MCD (5 %)", "Isolation Forest (5 %)", "LOF k=20 (5 %)"]):
     m = DETECTORES[nombre]
     eje.scatter(Z2[~m, 0], Z2[~m, 1], s=6, c="#BBBBBB", label="Normal", alpha=0.6)
     eje.scatter(Z2[m, 0], Z2[m, 1], s=16, c="#C44E52", label="Anomalia", edgecolor="k", lw=0.2)
     eje.set_title("%s\n%.0f %% de patologicos entre las marcadas"
-                  % (nombre, tabla_anomalias.loc[nombre, "% patologicos"]), fontsize=9)
+                  % (nombre, tabla_anomalias.loc[nombre, "% patologicos"]), fontsize=10)
     eje.set_xlabel("CP1 (%.0f %% var.)" % (100 * pca.explained_variance_ratio_[0]))
     eje.set_ylabel("CP2 (%.0f %% var.)" % (100 * pca.explained_variance_ratio_[1]))
-    eje.legend(fontsize=7, markerscale=1.6)
+    eje.legend(fontsize=9, markerscale=1.6)
 fig.suptitle("Anomalias detectadas sobre las dos primeras componentes principales", fontsize=12)
 plt.tight_layout()
 guardar("fig_anomalias_pca")

@@ -6,7 +6,13 @@ from nb_base import md, code
 
 def construir():
     # ================================================================= PORTADA
+    # La marca <!-- solo-notebook --> indica que la celda pertenece al cuaderno
+    # pero no debe reproducirse en el informe en PDF, que lleva su propia
+    # portada.
     md(r"""
+<!-- solo-notebook -->
+<a href="https://colab.research.google.com/github/amenesesy/actividad-ml-ctg/blob/main/ML_Actividad_CTG.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Abrir en Colab"/></a>
+
 # Deteccion de anomalias y tecnicas de agrupamiento sobre el conjunto de datos CTG
 
 **Asignatura:** Aprendizaje Automático, Maestría en Inteligencia Artificial
@@ -47,14 +53,24 @@ resultados no son un artefacto del procedimiento.
 
 Todo el código de este cuaderno, junto con las figuras, los resultados
 numéricos y el informe en PDF, está disponible en el repositorio público
-https://github.com/amenesesy/actividad-ml-ctg.
+https://github.com/amenesesy/actividad-ml-ctg. Pulsando el distintivo que
+encabeza esta página el cuaderno se abre directamente en Google Colab y puede
+ejecutarse de principio a fin sin instalar nada.
 """)
 
     # =========================================================== 0. ENTORNO
     md(r"""
 # 0. Configuración del entorno
 
-La primera celda reúne en un solo lugar todas las librerías del ecosistema
+El cuaderno está preparado para ejecutarse en dos entornos sin ningún cambio
+manual. En una instalación local basta con tener el archivo `CTG.csv` junto al
+cuaderno. En Google Colab, al que se accede mediante el distintivo que encabeza
+el documento, la primera celda detecta el entorno, comprueba que estén las
+librerías necesarias, instala las que falten y descarga el conjunto de datos
+desde el repositorio público del trabajo. La ejecución completa tarda alrededor
+de dos minutos.
+
+La segunda celda reúne en un solo lugar todas las librerías del ecosistema
 científico de Python que se van a utilizar y fija la semilla aleatoria. Esto
 último no es un detalle menor: Isolation Forest, K-Means y el experimento de
 imputación son algoritmos estocásticos, de manera que sin una semilla fija
@@ -63,7 +79,63 @@ sería verificable.
 """)
 
     code(r'''
-# Celda 0.1. Importacion de librerias y configuracion global.
+# Celda 0.1. Preparacion del entorno y compatibilidad con Google Colab.
+# Objetivo: que el cuaderno se ejecute igual en local que en Colab. Se detecta
+#   el entorno, se instalan las librerias que falten y se descarga el conjunto
+#   de datos del repositorio publico si no esta presente en el directorio.
+# Salidas: la constante EN_COLAB y el archivo CTG.csv disponible en el disco.
+
+import importlib.util
+import pathlib
+import subprocess
+import sys
+import urllib.request
+
+# Deteccion del entorno. En Colab existe el paquete google.colab; fuera de
+# Colab ni siquiera existe el paquete contenedor google, asi que la deteccion
+# se hace con un import protegido y no con find_spec, que ahi fallaria.
+try:
+    import google.colab  # noqa: F401
+    EN_COLAB = True
+except ImportError:
+    EN_COLAB = False
+
+# Direccion base del repositorio publico del trabajo, desde donde se descargan
+# los datos cuando el cuaderno se abre en un entorno recien creado.
+REPO = "https://raw.githubusercontent.com/amenesesy/actividad-ml-ctg/main"
+
+# Dependencias del cuaderno, como pares (modulo que se importa, paquete de pip).
+DEPENDENCIAS = [
+    ("numpy", "numpy"),
+    ("pandas", "pandas"),
+    ("matplotlib", "matplotlib"),
+    ("seaborn", "seaborn"),
+    ("sklearn", "scikit-learn"),
+    ("scipy", "scipy"),
+]
+
+faltantes = [pip for modulo, pip in DEPENDENCIAS
+             if importlib.util.find_spec(modulo) is None]
+if faltantes:
+    print("Instalando dependencias que faltan:", ", ".join(faltantes))
+    subprocess.run([sys.executable, "-m", "pip", "install", "-q", *faltantes],
+                   check=True)
+else:
+    print("Todas las dependencias estan disponibles.")
+
+# El conjunto de datos se descarga solo si no esta ya en el directorio actual.
+if not pathlib.Path("CTG.csv").exists():
+    print("Descargando CTG.csv desde el repositorio del trabajo...")
+    urllib.request.urlretrieve(REPO + "/CTG.csv", "CTG.csv")
+
+print("Entorno de ejecucion:", "Google Colab" if EN_COLAB else "instalacion local")
+print("Version de Python   :", sys.version.split()[0])
+print("Conjunto de datos   :", "CTG.csv disponible"
+      if pathlib.Path("CTG.csv").exists() else "NO disponible")
+''')
+
+    code(r'''
+# Celda 0.2. Importacion de librerias y configuracion global.
 # Objetivo: cargar todas las dependencias en un unico lugar, fijar la semilla
 #   aleatoria y homogeneizar el estilo de los graficos.
 # Salidas: las constantes globales SEMILLA y DIR_FIGURAS, y el diccionario RES
@@ -117,9 +189,17 @@ pd.set_option("display.max_columns", 50)
 
 sns.set_theme(style="whitegrid", palette="deep")   # estilo homogeneo de figuras
 plt.rcParams["figure.dpi"] = 110
-plt.rcParams["savefig.dpi"] = 150
+plt.rcParams["savefig.dpi"] = 200      # resolucion suficiente para imprimir
 plt.rcParams["savefig.bbox"] = "tight"
-plt.rcParams["font.size"] = 9
+# Tipografia holgada dentro de las figuras. Las figuras se disenan compactas y
+# con letra grande para que sigan siendo legibles cuando el informe en PDF las
+# reduce al ancho de la caja de texto.
+plt.rcParams["font.size"] = 11
+plt.rcParams["axes.titlesize"] = 12
+plt.rcParams["axes.labelsize"] = 11
+plt.rcParams["xtick.labelsize"] = 10
+plt.rcParams["ytick.labelsize"] = 10
+plt.rcParams["legend.fontsize"] = 10
 
 DIR_FIGURAS = pathlib.Path("figuras")         # carpeta destino de las figuras
 DIR_FIGURAS.mkdir(exist_ok=True)
@@ -183,17 +263,15 @@ algoritmo.
 
     code(r'''
 # Celda 1.1. Carga del conjunto de datos.
-# Se intenta primero la copia local, para poder ejecutar el cuaderno sin
-# conexion, y si no existe se descarga del repositorio del curso, de modo que
-# tambien funcione en Google Colab.
+# Se usa la copia local que dejo preparada la celda 0.1 y, si por lo que fuera
+# no estuviera, se recurre al archivo original publicado por el curso.
 # Salidas: df_bruto, con los datos tal y como vienen del archivo.
 
 RUTA_LOCAL = pathlib.Path("CTG.csv")
-URL_REMOTA = ("https://raw.githubusercontent.com/OscarJimenezFlores/ML/"
-              "refs/heads/main/Data/CTG.csv")
+URL_CURSO = ("https://raw.githubusercontent.com/OscarJimenezFlores/ML/"
+             "refs/heads/main/Data/CTG.csv")
 
-# Si el archivo esta junto al cuaderno se usa esa copia; si no, la URL publica.
-origen = RUTA_LOCAL if RUTA_LOCAL.exists() else URL_REMOTA
+origen = RUTA_LOCAL if RUTA_LOCAL.exists() else URL_CURSO
 df_bruto = pd.read_csv(origen)
 
 print("Origen de los datos          :", origen)
