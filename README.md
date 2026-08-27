@@ -33,15 +33,22 @@ pestaña del número de página, y la paleta institucional construida sobre el
 cian corporativo `#0098CD` y los grises `#333333` y `#777777`. Las figuras usan
 esa misma paleta.
 
+Las ocho celdas que recogen los resultados principales se reproducen en el
+informe como captura del cuaderno abierto en Google Colab, con el resaltado de
+sintaxis y el área de salida tal como los presenta el entorno. El resto de los
+listados van compuestos como texto, porque una captura ocupa más del doble que
+el mismo código en texto y las treinta y dos no cabrían en las 40 páginas que
+fija el enunciado.
+
 `ML_Actividad_CTG.ipynb` es el cuaderno ya ejecutado, con 60 celdas de las
 cuales 32 son de código, y conserva embebidas todas las salidas y los gráficos.
-
 Las filas 2127 y 2128 del archivo original no son pacientes sino las filas de
 resumen de la hoja de cálculo: reproducen, respectivamente, el mínimo y el
 máximo de cada columna, y el cuaderno lo comprueba variable a variable.
 
+`capturas/` contiene las ocho capturas de celda tomadas del cuaderno en Colab.
 `resultados.json` recoge los resultados numéricos que el cuaderno vuelca al
-terminar, y `figuras/` contiene las quince figuras en PNG a su resolución
+terminar y `figuras/` contiene las quince figuras en PNG a su resolución
 original. `CTG.csv` es una copia local del conjunto de datos.
 
 Los scripts `nb_base.py`, `nb_parte1.py` a `nb_parte4.py`, `build_notebook.py` y
@@ -85,8 +92,9 @@ desventajas de cada modelo y recogen las conclusiones y las referencias.
 ## Resultados principales
 
 Las 106 celdas faltantes del archivo se concentran en tres filas que resultaron
-ser artefactos de exportación de la hoja de cálculo original, una de ellas una
-fila de totales. Se eliminan en lugar de imputarse. El experimento controlado
+ser las filas de resumen de la hoja de cálculo original: una de mínimos y otra
+que repite el máximo de cada columna. Se eliminan en lugar de imputarse. El
+experimento controlado
 muestra que, si los faltantes hubieran sido reales y dispersos, la mejor
 estrategia habría sido la imputación por vecinos más cercanos, con un RMSE
 normalizado de 0,224 frente al 0,382 de la media.

@@ -37,19 +37,26 @@ SALIDA = "Actividad_ML_CTG_Meneses.pdf"
 REPO_URL = "https://github.com/amenesesy/actividad-ml-ctg"
 DIR_FIGURAS = pathlib.Path("figuras")
 
+# Capturas del cuaderno abierto en Google Colab. Se reproducen asi las celdas
+# que recogen los resultados principales; el resto de listados van como texto,
+# porque las capturas ocupan mas del doble y no cabrian en las 40 paginas que
+# fija el enunciado.
+DIR_CAPTURAS = pathlib.Path("capturas")
+ANCHO_CAPTURA = 15.0 * cm
+
 TAM_CUERPO = 12                      # exigido: Calibri 12
 INTERLINEADO = round(TAM_CUERPO * 1.5)   # exigido: interlineado 1,5
-TAM_CODIGO = 5.8                     # monoespaciada para los listados de codigo
+TAM_CODIGO = 5.4                     # monoespaciada para los listados de codigo
 TAM_SALIDA = 6.2                     # monoespaciada para las salidas de consola
 MAX_LINEAS_SALIDA = 17               # recorte de salidas muy largas
-ANCHO_CODIGO = 131                   # caracteres antes de partir una linea
+ANCHO_CODIGO = 140                   # caracteres antes de partir una linea
 
 # Maquetacion de las figuras. La regla es que ninguna se reduzca por debajo
 # de REDUCCION_MAX respecto de su tamano natural, para que la tipografia
 # interior siga siendo legible en papel.
 ANCHO_TEXTO = 17.0 * cm               # ancho util de la caja de texto
 DPI_FIGURAS = 200                     # resolucion con la que se guardan
-REDUCCION_MAX = 0.80                  # reduccion maxima admitida
+REDUCCION_MAX = 0.72                  # reduccion maxima admitida
 ALTO_MAX_FIGURA = 9.5 * cm           # alto maximo de una figura
 
 FUENTES = {
@@ -535,6 +542,20 @@ NOMBRE = "Abel"
 FECHA = "27/08/2026"
 
 
+def imagen_captura(ruta):
+    """Coloca una captura de celda de Colab escalada al ancho de la caja de texto.
+
+    Las capturas se tomaron con un ancho de 1446 pixeles, de modo que al
+    reducirlas al ancho util la tipografia del codigo queda en torno a 6 puntos,
+    equivalente a la de los listados compuestos como texto.
+    """
+    from reportlab.lib.utils import ImageReader
+    ancho_px, alto_px = ImageReader(str(ruta)).getSize()
+    ancho = ANCHO_CAPTURA
+    alto = ancho * alto_px / ancho_px
+    return Image(str(ruta), width=ancho, height=alto, hAlign="LEFT")
+
+
 def dibujar_encabezado(lienzo, documento):
     """Dibuja la tabla de encabezado de la plantilla en la parte superior."""
     izq = documento.leftMargin
@@ -675,9 +696,12 @@ def indice(estilos):
         "Python comentado, a continuación la salida que produce y, por último, la "
         "interpretación de los resultados obtenidos.", estilos["cuerpo"]))
     elementos.append(Paragraph(
-        "Las salidas de consola más extensas aparecen recortadas para respetar la "
-        "extensión máxima que fija el enunciado. La versión completa, con todas "
-        "las salidas y las figuras a resolución original, está disponible en el "
+        "Las ocho celdas que recogen los resultados principales se reproducen como "
+        "captura del cuaderno abierto en Google Colab, con el resaltado de sintaxis "
+        "y el área de salida tal como los presenta el entorno; el resto de los "
+        "listados van compuestos como texto para respetar la extensión máxima que "
+        "fija el enunciado. El cuaderno completo, con todas las salidas y las "
+        "figuras a resolución original, está disponible en el "
         'repositorio público <link href="%s" color="#0098CD">%s</link>.'
         % (REPO_URL, REPO_URL), estilos["cuerpo"]))
     return elementos
@@ -713,8 +737,33 @@ def main():
         # ---- Celda de codigo -------------------------------------------------
         n_listado += 1
         titulo = re.search(r"^# Celda ([\d.]+)\.\s*(.+?)\.?$", fuente, flags=re.M)
+        clave = titulo.group(1) if titulo else None
         rotulo = ("Celda %s. %s" % (titulo.group(1), titulo.group(2))
                   if titulo else "Código %d" % n_listado)
+
+        # Las celdas que recogen los resultados principales se reproducen como
+        # captura del cuaderno en Google Colab, con el resaltado de sintaxis y
+        # el area de salida tal como las presenta el entorno. Solo se eligieron
+        # celdas que no generan figura, para no duplicar las que ya aparecen
+        # aparte en formato APA.
+        captura = DIR_CAPTURAS / ("colab_%s.png" % clave) if clave else None
+        if captura is not None and captura.exists():
+            # El rotulo y la captura viajan juntos: separarlos dejaria el titulo
+            # del listado colgando al pie de una pagina y la imagen en la
+            # siguiente.
+            elementos.append(KeepTogether([
+                Spacer(1, 3),
+                Paragraph(
+                    "<b>Listado %d.</b> %s. Captura del cuaderno en Google Colab."
+                    % (n_listado, html.escape(rotulo)),
+                    ParagraphStyle("rot", parent=estilos["cuerpo"], fontSize=9,
+                                   leading=11, textColor=colors.HexColor("#444444"),
+                                   spaceAfter=2)),
+                imagen_captura(captura),
+            ]))
+            elementos.append(Spacer(1, 6))
+            continue
+
         elementos.append(Spacer(1, 2))
         elementos.append(Paragraph(
             "<b>Listado %d.</b> %s" % (n_listado, html.escape(rotulo)),
