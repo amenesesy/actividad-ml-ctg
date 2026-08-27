@@ -9,7 +9,9 @@ ejecucion real: ninguna cifra se transcribe a mano y el documento no puede
 desincronizarse del analisis.
 
 Formato exigido por la actividad: tipo de letra Calibri, tamano 12, interlineado
-1,5, maximo 40 paginas, en PDF.
+1,5, maximo 40 paginas, en PDF. NOTA: reproducir las 32 celdas como captura de
+Colab lleva el informe a 47 paginas; una captura ocupa mas del doble que el
+mismo codigo compuesto como texto. Es una decision expresa del autor.
 
 Uso:
     python build_report.py
@@ -37,10 +39,9 @@ SALIDA = "Actividad_ML_CTG_Meneses.pdf"
 REPO_URL = "https://github.com/amenesesy/actividad-ml-ctg"
 DIR_FIGURAS = pathlib.Path("figuras")
 
-# Capturas del cuaderno abierto en Google Colab. Se reproducen asi las celdas
-# que recogen los resultados principales; el resto de listados van como texto,
-# porque las capturas ocupan mas del doble y no cabrian en las 40 paginas que
-# fija el enunciado.
+# Capturas del cuaderno abierto en Google Colab. Las TREINTA Y DOS celdas de
+# codigo se reproducen asi, con el resaltado de sintaxis y el area de salida tal
+# como los presenta el entorno.
 DIR_CAPTURAS = pathlib.Path("capturas")
 ANCHO_CAPTURA = 15.0 * cm
 
@@ -542,18 +543,60 @@ NOMBRE = "Abel"
 FECHA = "27/08/2026"
 
 
-def imagen_captura(ruta):
-    """Coloca una captura de celda de Colab escalada al ancho de la caja de texto.
+ALTO_MAX_CAPTURA = 9.0 * cm     # altura maxima de cada trozo de captura
+DIR_TROZOS = pathlib.Path("capturas") / "trozos"
 
-    Las capturas se tomaron con un ancho de 1446 pixeles, de modo que al
-    reducirlas al ancho util la tipografia del codigo queda en torno a 6 puntos,
-    equivalente a la de los listados compuestos como texto.
+
+def _filas_en_blanco(imagen):
+    """Devuelve el conjunto de filas de la imagen que no tienen tinta.
+
+    Sirve para partir una captura por un hueco entre lineas y no por la mitad
+    de un renglon de codigo.
     """
-    from reportlab.lib.utils import ImageReader
-    ancho_px, alto_px = ImageReader(str(ruta)).getSize()
-    ancho = ANCHO_CAPTURA
-    alto = ancho * alto_px / ancho_px
-    return Image(str(ruta), width=ancho, height=alto, hAlign="LEFT")
+    from PIL import Image as PILImage
+    import numpy as np
+    a = np.array(imagen.convert("L"))
+    return set(int(i) for i in np.where((a < 235).sum(axis=1) == 0)[0])
+
+
+def imagen_captura(ruta):
+    """Devuelve la captura de una celda de Colab lista para insertar en el PDF.
+
+    Las capturas altas se dividen en varios trozos, cortando siempre por una
+    linea en blanco. Si no se dividieran, reportlab no podria repartirlas entre
+    dos paginas y cada celda que no cupiese dejaria media pagina vacia.
+    """
+    from PIL import Image as PILImage
+
+    original = PILImage.open(str(ruta))
+    ancho_px, alto_px = original.size
+    escala = ANCHO_CAPTURA / ancho_px           # centimetros por pixel
+    alto_total = alto_px * escala
+
+    if alto_total <= ALTO_MAX_CAPTURA:
+        return [Image(str(ruta), width=ANCHO_CAPTURA, height=alto_total, hAlign="LEFT")]
+
+    # Se busca el corte mas proximo al objetivo que caiga en una linea sin tinta.
+    blancas = _filas_en_blanco(original)
+    paso_px = int(ALTO_MAX_CAPTURA / escala)
+    cortes, y = [0], 0
+    while alto_px - y > paso_px:
+        objetivo = y + paso_px
+        corte = next((objetivo - d for d in range(0, 90)
+                      if (objetivo - d) in blancas and (objetivo - d) > y + 40), objetivo)
+        cortes.append(corte)
+        y = corte
+    cortes.append(alto_px)
+
+    DIR_TROZOS.mkdir(parents=True, exist_ok=True)
+    piezas = []
+    for i in range(len(cortes) - 1):
+        destino = DIR_TROZOS / ("%s_p%d.png" % (ruta.stem, i))
+        original.crop((0, cortes[i], ancho_px, cortes[i + 1])).save(destino)
+        alto_trozo = (cortes[i + 1] - cortes[i]) * escala
+        piezas.append(Image(str(destino), width=ANCHO_CAPTURA,
+                            height=alto_trozo, hAlign="LEFT"))
+    return piezas
 
 
 def dibujar_encabezado(lienzo, documento):
@@ -696,12 +739,13 @@ def indice(estilos):
         "Python comentado, a continuación la salida que produce y, por último, la "
         "interpretación de los resultados obtenidos.", estilos["cuerpo"]))
     elementos.append(Paragraph(
-        "Las ocho celdas que recogen los resultados principales se reproducen como "
-        "captura del cuaderno abierto en Google Colab, con el resaltado de sintaxis "
-        "y el área de salida tal como los presenta el entorno; el resto de los "
-        "listados van compuestos como texto para respetar la extensión máxima que "
-        "fija el enunciado. El cuaderno completo, con todas las salidas y las "
-        "figuras a resolución original, está disponible en el "
+        "Las treinta y dos celdas de código se reproducen como captura del cuaderno "
+        "abierto en Google Colab, con el resaltado de sintaxis y el área de salida "
+        "tal como los presenta el entorno. Las figuras que genera cada celda "
+        "aparecen además por separado en formato APA, con su número, su título y "
+        "su nota, porque dentro de la captura salen a un tamaño que no permite "
+        "leerlas. El cuaderno completo, con las figuras a resolución original, está "
+        "disponible en el "
         'repositorio público <link href="%s" color="#0098CD">%s</link>.'
         % (REPO_URL, REPO_URL), estilos["cuerpo"]))
     return elementos
@@ -741,16 +785,18 @@ def main():
         rotulo = ("Celda %s. %s" % (titulo.group(1), titulo.group(2))
                   if titulo else "Código %d" % n_listado)
 
-        # Las celdas que recogen los resultados principales se reproducen como
-        # captura del cuaderno en Google Colab, con el resaltado de sintaxis y
-        # el area de salida tal como las presenta el entorno. Solo se eligieron
-        # celdas que no generan figura, para no duplicar las que ya aparecen
-        # aparte en formato APA.
+        # Cada celda de codigo se reproduce como captura del cuaderno abierto en
+        # Google Colab, con el resaltado de sintaxis y el area de salida tal como
+        # los presenta el entorno. Las figuras que genera la celda siguen
+        # apareciendo despues en formato APA, con su numero, su titulo y su nota,
+        # porque el texto las cita por ese numero y dentro de la captura salen a
+        # un tamano que no permite leerlas.
         captura = DIR_CAPTURAS / ("colab_%s.png" % clave) if clave else None
         if captura is not None and captura.exists():
             # El rotulo y la captura viajan juntos: separarlos dejaria el titulo
             # del listado colgando al pie de una pagina y la imagen en la
             # siguiente.
+            piezas = imagen_captura(captura)
             elementos.append(KeepTogether([
                 Spacer(1, 3),
                 Paragraph(
@@ -759,22 +805,24 @@ def main():
                     ParagraphStyle("rot", parent=estilos["cuerpo"], fontSize=9,
                                    leading=11, textColor=colors.HexColor("#444444"),
                                    spaceAfter=2)),
-                imagen_captura(captura),
+                piezas[0],
             ]))
+            elementos.extend(piezas[1:])
             elementos.append(Spacer(1, 6))
-            continue
-
-        elementos.append(Spacer(1, 2))
-        elementos.append(Paragraph(
-            "<b>Listado %d.</b> %s" % (n_listado, html.escape(rotulo)),
-            ParagraphStyle("rot", parent=estilos["cuerpo"], fontSize=9, leading=11,
-                           textColor=colors.HexColor("#444444"), spaceAfter=1)))
-        elementos.append(bloque_monoespaciado(fuente, estilos["codigo"],
-                                              FONDO_CODIGO, BORDE_CODIGO, ANCHO_CODIGO))
-        elementos.append(Spacer(1, 4))
+        else:
+            elementos.append(Spacer(1, 2))
+            elementos.append(Paragraph(
+                "<b>Listado %d.</b> %s" % (n_listado, html.escape(rotulo)),
+                ParagraphStyle("rot", parent=estilos["cuerpo"], fontSize=9, leading=11,
+                               textColor=colors.HexColor("#444444"), spaceAfter=1)))
+            elementos.append(bloque_monoespaciado(fuente, estilos["codigo"],
+                                                  FONDO_CODIGO, BORDE_CODIGO, ANCHO_CODIGO))
+            elementos.append(Spacer(1, 4))
 
         # ---- Salida de consola -----------------------------------------------
-        salida = texto_de_salidas(celda)
+        # Solo para las celdas compuestas como texto: en las capturas la salida
+        # ya viene incluida en la propia imagen.
+        salida = None if (captura is not None and captura.exists()) else texto_de_salidas(celda)
         if salida:
             elementos.append(Spacer(1, 2))
             elementos.append(bloque_monoespaciado(salida, estilos["salida"],

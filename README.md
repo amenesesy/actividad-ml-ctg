@@ -24,7 +24,7 @@ se descarga solo.
 
 ## Contenido del repositorio
 
-`Actividad_ML_CTG_Meneses.pdf` es el informe final. Tiene 40 páginas, está
+`Actividad_ML_CTG_Meneses.pdf` es el informe final. Tiene 47 páginas, está
 compuesto en Calibri 12 con interlineado 1,5 y contiene la narrativa completa,
 todo el código Python comentado, las salidas que produce y las quince figuras
 en formato APA. Reproduce la plantilla del enunciado: el encabezado de tres
@@ -33,12 +33,15 @@ pestaña del número de página, y la paleta institucional construida sobre el
 cian corporativo `#0098CD` y los grises `#333333` y `#777777`. Las figuras usan
 esa misma paleta.
 
-Las ocho celdas que recogen los resultados principales se reproducen en el
-informe como captura del cuaderno abierto en Google Colab, con el resaltado de
-sintaxis y el área de salida tal como los presenta el entorno. El resto de los
-listados van compuestos como texto, porque una captura ocupa más del doble que
-el mismo código en texto y las treinta y dos no cabrían en las 40 páginas que
-fija el enunciado.
+Las treinta y dos celdas de código se reproducen en el informe como captura del
+cuaderno abierto en Google Colab, con el resaltado de sintaxis y el área de
+salida tal como los presenta el entorno. Las figuras que genera cada celda
+aparecen además por separado en formato APA, con su número, su título y su nota,
+porque dentro de la captura salen a un tamaño que no permite leerlas.
+
+Reproducir así las treinta y dos celdas lleva el informe a 47 páginas, por
+encima de las 40 que fija el enunciado: una captura ocupa más del doble que el
+mismo código compuesto como texto.
 
 `ML_Actividad_CTG.ipynb` es el cuaderno ya ejecutado, con 60 celdas de las
 cuales 32 son de código, y conserva embebidas todas las salidas y los gráficos.
@@ -46,7 +49,8 @@ Las filas 2127 y 2128 del archivo original no son pacientes sino las filas de
 resumen de la hoja de cálculo: reproducen, respectivamente, el mínimo y el
 máximo de cada columna, y el cuaderno lo comprueba variable a variable.
 
-`capturas/` contiene las ocho capturas de celda tomadas del cuaderno en Colab.
+`capturas/` contiene las treinta y dos capturas de celda tomadas del cuaderno en
+Colab.
 `resultados.json` recoge los resultados numéricos que el cuaderno vuelca al
 terminar y `figuras/` contiene las quince figuras en PNG a su resolución
 original. `CTG.csv` es una copia local del conjunto de datos.
