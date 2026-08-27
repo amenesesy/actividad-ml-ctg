@@ -1,0 +1,85 @@
+# Detección de anomalías y técnicas de agrupamiento sobre el conjunto de datos CTG
+
+Actividad de la asignatura **Aprendizaje Automático** de la Maestría en
+Inteligencia Artificial. El trabajo aplica el flujo completo de aprendizaje no
+supervisado al conjunto de datos de cardiotocografía `CTG.csv`, que reúne 2 126
+registros de monitoreo fetal descritos por 21 variables cuantitativas.
+
+Autor: Abel Meneses Yupanqui.
+
+## Contenido del repositorio
+
+`Actividad_ML_CTG_Meneses.pdf` es el informe final. Tiene 40 páginas, está
+compuesto en Calibri 12 con interlineado 1,5 y contiene la narrativa completa,
+todo el código Python comentado, las salidas que produce y las quince figuras
+en formato APA.
+
+`ML_Actividad_CTG.ipynb` es el cuaderno ya ejecutado, con 59 celdas de las
+cuales 31 son de código, y conserva embebidas todas las salidas y los gráficos.
+
+`resultados.json` recoge los resultados numéricos que el cuaderno vuelca al
+terminar, y `figuras/` contiene las quince figuras en PNG a su resolución
+original. `CTG.csv` es una copia local del conjunto de datos.
+
+Los scripts `nb_base.py`, `nb_parte1.py` a `nb_parte4.py`, `build_notebook.py` y
+`build_report.py` son la maquinaria que genera el cuaderno y el informe.
+
+## Cómo se regenera todo
+
+```bash
+python build_notebook.py
+```
+
+```bash
+python -m jupyter nbconvert --to notebook --execute --inplace ML_Actividad_CTG.ipynb
+```
+
+```bash
+python build_report.py
+```
+
+El script `build_notebook.py` ensambla el cuaderno a partir de los módulos
+`nb_parte1.py` a `nb_parte4.py`, en los que cada celda se declara como una
+cadena de texto y `nb_base.py` las serializa al formato nbformat v4. Por su
+parte, `build_report.py` construye el PDF leyendo el cuaderno ya ejecutado, de
+modo que ninguna cifra del informe se transcribe a mano y el documento no puede
+desincronizarse del análisis. La semilla aleatoria está fijada en 42 en todo el
+trabajo, de manera que la ejecución es reproducible.
+
+## Estructura del análisis
+
+Las secciones 1 y 2 cubren el diccionario de variables, los estadísticos
+descriptivos, las frecuencias de las categóricas y la matriz de correlaciones.
+La sección 3 diagnostica los valores faltantes, justifica la decisión que se
+toma con ellos y la respalda con un experimento controlado de imputación. La
+sección 4 selecciona las variables, depura las redundancias y estandariza las
+escalas. La sección 5 aplica el Z-score, la regla de Tukey, la distancia de
+Mahalanobis robusta, Isolation Forest y el factor local de atipicidad. La
+sección 6 aplica K-Means, DBSCAN y el agrupamiento jerárquico aglomerativo, con
+validación interna y externa. Las secciones 7 y 8 comparan las ventajas y
+desventajas de cada modelo y recogen las conclusiones y las referencias.
+
+## Resultados principales
+
+Las 106 celdas faltantes del archivo se concentran en tres filas que resultaron
+ser artefactos de exportación de la hoja de cálculo original, una de ellas una
+fila de totales. Se eliminan en lugar de imputarse. El experimento controlado
+muestra que, si los faltantes hubieran sido reales y dispersos, la mejor
+estrategia habría sido la imputación por vecinos más cercanos, con un RMSE
+normalizado de 0,224 frente al 0,382 de la media.
+
+En detección de anomalías, Isolation Forest es el mejor método. Marcando el 5 %
+de los registros, el 54,2 % de los señalados son casos patológicos frente a una
+tasa base del 8,3 %, lo que supone un lift de 6,55 y un recall del 33 %.
+
+En agrupamiento, K-Means con tres grupos alcanza un índice de Rand ajustado de
+0,214 frente a la etiqueta `NSP` y recupera tres fenotipos clínicos
+interpretables: un trazado tranquilizador con un 97,1 % de casos normales, un
+grupo de vigilancia con un 31 % de sospechosos y un grupo comprometido con un
+51,5 % de patológicos, que concentra el 60 % de todos los casos graves del
+conjunto.
+
+## Entorno
+
+Python 3.14 con pandas 3.0, NumPy 2.3, scikit-learn 1.9, SciPy 1.18,
+matplotlib 3.11, seaborn 0.13 y reportlab 5.0.

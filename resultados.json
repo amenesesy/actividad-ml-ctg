@@ -1,0 +1,628 @@
+{
+  "n_columnas": 40,
+  "top_asimetria": {
+    "DS": 16.23,
+    "FM": 9.46,
+    "C": 6.1,
+    "FS": 5.28,
+    "E": 5.16,
+    "D": 4.83
+  },
+  "frec_nsp": {
+    "1.0": 1655,
+    "2.0": 295,
+    "3.0": 176,
+    "NaN": 3
+  },
+  "pares_correlacionados": [
+    [
+      "Mean",
+      "Median",
+      0.948
+    ],
+    [
+      "Mode",
+      "Median",
+      0.933
+    ],
+    [
+      "Width",
+      "Min",
+      -0.899
+    ],
+    [
+      "Mode",
+      "Mean",
+      0.893
+    ],
+    [
+      "LB",
+      "Median",
+      0.789
+    ],
+    [
+      "Width",
+      "Nmax",
+      0.747
+    ],
+    [
+      "LB",
+      "Mean",
+      0.723
+    ],
+    [
+      "LB",
+      "Mode",
+      0.709
+    ]
+  ],
+  "corr_media_abs": 0.234,
+  "atipicos_univariantes": {
+    "Nzeros": 502,
+    "FM": 310,
+    "ALTV": 309,
+    "Variance": 184,
+    "DP": 178,
+    "AC": 83,
+    "DL": 81,
+    "Mode": 73
+  },
+  "faltantes_total": 106,
+  "filas_con_na": [
+    2126,
+    2127,
+    2128
+  ],
+  "n_filas_final": 2126,
+  "n_filas_eliminadas": 3,
+  "comparacion_imputacion": [
+    {
+      "Estrategia": "Media",
+      "RMSE normalizado": 0.3815,
+      "Ratio desv. tipica": 0.9491,
+      "Error medio de correlacion": 0.0266
+    },
+    {
+      "Estrategia": "Mediana",
+      "RMSE normalizado": 0.3986,
+      "Ratio desv. tipica": 0.953,
+      "Error medio de correlacion": 0.028
+    },
+    {
+      "Estrategia": "Moda",
+      "RMSE normalizado": 0.4814,
+      "Ratio desv. tipica": 0.9749,
+      "Error medio de correlacion": 0.0378
+    },
+    {
+      "Estrategia": "KNN (k=5)",
+      "RMSE normalizado": 0.2242,
+      "Ratio desv. tipica": 0.9834,
+      "Error medio de correlacion": 0.0064
+    }
+  ],
+  "n_variables_modelo": 20,
+  "variables_modelo": [
+    "LB",
+    "AC",
+    "FM",
+    "UC",
+    "ASTV",
+    "MSTV",
+    "ALTV",
+    "MLTV",
+    "DL",
+    "DS",
+    "DP",
+    "Min",
+    "Max",
+    "Nmax",
+    "Nzeros",
+    "Mode",
+    "Mean",
+    "Median",
+    "Variance",
+    "Tendency"
+  ],
+  "pca_var": [
+    0.2752,
+    0.1576,
+    0.0915,
+    0.0733,
+    0.058,
+    0.0519,
+    0.0477,
+    0.0422
+  ],
+  "pca_n80": 9,
+  "n_zscore": 343,
+  "n_iqr": 1220,
+  "n_mahalanobis_chi2": 646,
+  "perfil_iforest": {
+    "Variance": 2.33,
+    "DP": 2.22,
+    "MSTV": 1.68,
+    "Max": 1.54,
+    "Mean": -1.48,
+    "Mode": -1.39,
+    "Nmax": 1.33,
+    "DL": 1.32
+  },
+  "tabla_anomalias": [
+    {
+      "Metodo": "Z-score (|z|>3)",
+      "Marcadas": 343,
+      "% del conjunto": 16.1,
+      "% patologicos": 40.5,
+      "Lift": 4.9,
+      "% no normales": 49.0,
+      "Recall NSP=3": 79.0
+    },
+    {
+      "Metodo": "Tukey (1.5 RIC)",
+      "Marcadas": 1220,
+      "% del conjunto": 57.4,
+      "% patologicos": 13.7,
+      "Lift": 1.65,
+      "% no normales": 30.4,
+      "Recall NSP=3": 94.9
+    },
+    {
+      "Metodo": "Mahalanobis MCD (5 %)",
+      "Marcadas": 106,
+      "% del conjunto": 5.0,
+      "% patologicos": 41.5,
+      "Lift": 5.01,
+      "% no normales": 49.1,
+      "Recall NSP=3": 25.0
+    },
+    {
+      "Metodo": "Isolation Forest (5 %)",
+      "Marcadas": 107,
+      "% del conjunto": 5.0,
+      "% patologicos": 54.2,
+      "Lift": 6.55,
+      "% no normales": 60.7,
+      "Recall NSP=3": 33.0
+    },
+    {
+      "Metodo": "LOF k=20 (5 %)",
+      "Marcadas": 107,
+      "% del conjunto": 5.0,
+      "% patologicos": 17.8,
+      "Lift": 2.14,
+      "% no normales": 39.3,
+      "Recall NSP=3": 10.8
+    }
+  ],
+  "tasa_base_nsp3": 0.0828,
+  "jaccard_if_lof": 0.196,
+  "barrido_k": [
+    {
+      "k": 2,
+      "Inercia": 35166.1,
+      "Silueta": 0.1832,
+      "Davies-Bouldin": 2.0107,
+      "Calinski-Harabasz": 444.2,
+      "ARI vs NSP": 0.016,
+      "NMI vs NSP": 0.0864
+    },
+    {
+      "k": 3,
+      "Inercia": 31323.9,
+      "Silueta": 0.1572,
+      "Davies-Bouldin": 1.9233,
+      "Calinski-Harabasz": 379.4,
+      "ARI vs NSP": 0.2142,
+      "NMI vs NSP": 0.2224
+    },
+    {
+      "k": 4,
+      "Inercia": 28241.2,
+      "Silueta": 0.1543,
+      "Davies-Bouldin": 1.8186,
+      "Calinski-Harabasz": 357.6,
+      "ARI vs NSP": 0.0908,
+      "NMI vs NSP": 0.1822
+    },
+    {
+      "k": 5,
+      "Inercia": 26076.2,
+      "Silueta": 0.161,
+      "Davies-Bouldin": 1.5396,
+      "Calinski-Harabasz": 334.4,
+      "ARI vs NSP": 0.0883,
+      "NMI vs NSP": 0.178
+    },
+    {
+      "k": 6,
+      "Inercia": 24366.9,
+      "Silueta": 0.1522,
+      "Davies-Bouldin": 1.6241,
+      "Calinski-Harabasz": 315.9,
+      "ARI vs NSP": 0.1224,
+      "NMI vs NSP": 0.2257
+    },
+    {
+      "k": 7,
+      "Inercia": 22783.4,
+      "Silueta": 0.1568,
+      "Davies-Bouldin": 1.4705,
+      "Calinski-Harabasz": 305.9,
+      "ARI vs NSP": 0.1261,
+      "NMI vs NSP": 0.2236
+    },
+    {
+      "k": 8,
+      "Inercia": 21572.2,
+      "Silueta": 0.1479,
+      "Davies-Bouldin": 1.592,
+      "Calinski-Harabasz": 293.8,
+      "ARI vs NSP": 0.1012,
+      "NMI vs NSP": 0.2172
+    },
+    {
+      "k": 9,
+      "Inercia": 20469.0,
+      "Silueta": 0.1558,
+      "Davies-Bouldin": 1.5537,
+      "Calinski-Harabasz": 285.1,
+      "ARI vs NSP": 0.0788,
+      "NMI vs NSP": 0.203
+    },
+    {
+      "k": 10,
+      "Inercia": 19671.6,
+      "Silueta": 0.1603,
+      "Davies-Bouldin": 1.5635,
+      "Calinski-Harabasz": 273.1,
+      "ARI vs NSP": 0.0681,
+      "NMI vs NSP": 0.2003
+    }
+  ],
+  "k_codo": 5,
+  "tamanos_kmeans": {
+    "0": 204,
+    "1": 835,
+    "2": 1087
+  },
+  "silueta_kmeans": 0.1572,
+  "centroides_kmeans": {
+    "Grupo 0": {
+      "LB": -0.51,
+      "AC": -0.4,
+      "FM": 0.75,
+      "UC": 0.55,
+      "ASTV": 0.21,
+      "MSTV": 1.28,
+      "ALTV": -0.53,
+      "MLTV": -0.86,
+      "DL": 1.66,
+      "DS": 0.54,
+      "DP": 2.21,
+      "Min": -1.1,
+      "Max": 0.61,
+      "Nmax": 0.89,
+      "Nzeros": 0.31,
+      "Mode": -1.55,
+      "Mean": -1.86,
+      "Median": -1.56,
+      "Variance": 1.73,
+      "Tendency": -0.81
+    },
+    "Grupo 1": {
+      "LB": 0.72,
+      "AC": -0.25,
+      "FM": -0.14,
+      "UC": -0.3,
+      "ASTV": 0.58,
+      "MSTV": -0.75,
+      "ALTV": 0.67,
+      "MLTV": -0.16,
+      "DL": -0.56,
+      "DS": -0.06,
+      "DP": -0.27,
+      "Min": 0.88,
+      "Max": -0.15,
+      "Nmax": -0.57,
+      "Nzeros": -0.29,
+      "Mode": 0.57,
+      "Mean": 0.7,
+      "Median": 0.64,
+      "Variance": -0.52,
+      "Tendency": -0.02
+    },
+    "Grupo 2": {
+      "LB": -0.45,
+      "AC": 0.27,
+      "FM": -0.04,
+      "UC": 0.12,
+      "ASTV": -0.49,
+      "MSTV": 0.34,
+      "ALTV": -0.42,
+      "MLTV": 0.29,
+      "DL": 0.12,
+      "DS": -0.06,
+      "DP": -0.21,
+      "Min": -0.47,
+      "Max": 0.0,
+      "Nmax": 0.27,
+      "Nzeros": 0.16,
+      "Mode": -0.15,
+      "Mean": -0.19,
+      "Median": -0.2,
+      "Variance": 0.08,
+      "Tendency": 0.17
+    }
+  },
+  "ari_kmeans": 0.2142,
+  "nmi_kmeans": 0.2224,
+  "pureza_kmeans": 0.7865,
+  "contingencia_kmeans": {
+    "0": {
+      "Normal": 88,
+      "Sospechoso": 11,
+      "Patologico": 105
+    },
+    "1": {
+      "Normal": 512,
+      "Sospechoso": 259,
+      "Patologico": 64
+    },
+    "2": {
+      "Normal": 1055,
+      "Sospechoso": 25,
+      "Patologico": 7
+    }
+  },
+  "porcentajes_kmeans": {
+    "0": {
+      "Normal": 43.1,
+      "Sospechoso": 5.4,
+      "Patologico": 51.5
+    },
+    "1": {
+      "Normal": 61.3,
+      "Sospechoso": 31.0,
+      "Patologico": 7.7
+    },
+    "2": {
+      "Normal": 97.1,
+      "Sospechoso": 2.3,
+      "Patologico": 0.6
+    }
+  },
+  "anomalias_por_grupo": {
+    "0": 38.2,
+    "1": 1.0,
+    "2": 1.9
+  },
+  "dbscan_n_grupos": 2,
+  "dbscan_ruido": 213,
+  "barrido_dbscan": [
+    {
+      "eps": 1.6,
+      "min_samples": 10,
+      "Grupos": 1,
+      "Ruido": 540,
+      "% ruido": 25.4,
+      "Silueta (sin ruido)": NaN,
+      "ARI vs NSP": 0.0704
+    },
+    {
+      "eps": 1.6,
+      "min_samples": 16,
+      "Grupos": 1,
+      "Ruido": 716,
+      "% ruido": 33.7,
+      "Silueta (sin ruido)": NaN,
+      "ARI vs NSP": 0.0212
+    },
+    {
+      "eps": 1.6,
+      "min_samples": 20,
+      "Grupos": 1,
+      "Ruido": 808,
+      "% ruido": 38.0,
+      "Silueta (sin ruido)": NaN,
+      "ARI vs NSP": 0.015
+    },
+    {
+      "eps": 1.8,
+      "min_samples": 10,
+      "Grupos": 2,
+      "Ruido": 300,
+      "% ruido": 14.1,
+      "Silueta (sin ruido)": 0.3936,
+      "ARI vs NSP": 0.1597
+    },
+    {
+      "eps": 1.8,
+      "min_samples": 16,
+      "Grupos": 1,
+      "Ruido": 439,
+      "% ruido": 20.6,
+      "Silueta (sin ruido)": NaN,
+      "ARI vs NSP": 0.1026
+    },
+    {
+      "eps": 1.8,
+      "min_samples": 20,
+      "Grupos": 1,
+      "Ruido": 497,
+      "% ruido": 23.4,
+      "Silueta (sin ruido)": NaN,
+      "ARI vs NSP": 0.0785
+    },
+    {
+      "eps": 2.0,
+      "min_samples": 10,
+      "Grupos": 2,
+      "Ruido": 213,
+      "% ruido": 10.0,
+      "Silueta (sin ruido)": 0.3874,
+      "ARI vs NSP": 0.1965
+    },
+    {
+      "eps": 2.0,
+      "min_samples": 16,
+      "Grupos": 2,
+      "Ruido": 268,
+      "% ruido": 12.6,
+      "Silueta (sin ruido)": 0.3747,
+      "ARI vs NSP": 0.1784
+    },
+    {
+      "eps": 2.0,
+      "min_samples": 20,
+      "Grupos": 1,
+      "Ruido": 321,
+      "% ruido": 15.1,
+      "Silueta (sin ruido)": NaN,
+      "ARI vs NSP": 0.1565
+    },
+    {
+      "eps": 2.2,
+      "min_samples": 10,
+      "Grupos": 2,
+      "Ruido": 139,
+      "% ruido": 6.5,
+      "Silueta (sin ruido)": 0.3837,
+      "ARI vs NSP": 0.2047
+    },
+    {
+      "eps": 2.2,
+      "min_samples": 16,
+      "Grupos": 2,
+      "Ruido": 178,
+      "% ruido": 8.4,
+      "Silueta (sin ruido)": 0.3666,
+      "ARI vs NSP": 0.2116
+    },
+    {
+      "eps": 2.2,
+      "min_samples": 20,
+      "Grupos": 2,
+      "Ruido": 203,
+      "% ruido": 9.5,
+      "Silueta (sin ruido)": 0.3683,
+      "ARI vs NSP": 0.2003
+    },
+    {
+      "eps": 2.5,
+      "min_samples": 10,
+      "Grupos": 1,
+      "Ruido": 96,
+      "% ruido": 4.5,
+      "Silueta (sin ruido)": NaN,
+      "ARI vs NSP": 0.0917
+    },
+    {
+      "eps": 2.5,
+      "min_samples": 16,
+      "Grupos": 1,
+      "Ruido": 114,
+      "% ruido": 5.4,
+      "Silueta (sin ruido)": NaN,
+      "ARI vs NSP": 0.1089
+    },
+    {
+      "eps": 2.5,
+      "min_samples": 20,
+      "Grupos": 1,
+      "Ruido": 129,
+      "% ruido": 6.1,
+      "Silueta (sin ruido)": NaN,
+      "ARI vs NSP": 0.135
+    },
+    {
+      "eps": 3.0,
+      "min_samples": 10,
+      "Grupos": 2,
+      "Ruido": 38,
+      "% ruido": 1.8,
+      "Silueta (sin ruido)": 0.4471,
+      "ARI vs NSP": 0.0705
+    },
+    {
+      "eps": 3.0,
+      "min_samples": 16,
+      "Grupos": 1,
+      "Ruido": 68,
+      "% ruido": 3.2,
+      "Silueta (sin ruido)": NaN,
+      "ARI vs NSP": 0.0817
+    },
+    {
+      "eps": 3.0,
+      "min_samples": 20,
+      "Grupos": 1,
+      "Ruido": 73,
+      "% ruido": 3.4,
+      "Silueta (sin ruido)": NaN,
+      "ARI vs NSP": 0.081
+    }
+  ],
+  "dbscan_ari": 0.1965,
+  "jaccard_ruido_if": 0.455,
+  "comparacion_enlaces": [
+    {
+      "Enlace": "ward",
+      "Tamanos": "1097 / 942 / 87",
+      "Grupo mayor (%)": 51.6,
+      "Silueta": 0.1348,
+      "ARI vs NSP": 0.1793
+    },
+    {
+      "Enlace": "average",
+      "Tamanos": "2114 / 7 / 5",
+      "Grupo mayor (%)": 99.4,
+      "Silueta": 0.5188,
+      "ARI vs NSP": 0.0187
+    },
+    {
+      "Enlace": "complete",
+      "Tamanos": "2116 / 7 / 3",
+      "Grupo mayor (%)": 99.5,
+      "Silueta": 0.5749,
+      "ARI vs NSP": 0.0202
+    }
+  ],
+  "ari_jerarquico": 0.1793,
+  "ari_kmeans_vs_jerarquico": 0.3711,
+  "tabla_clustering": [
+    {
+      "Algoritmo": "K-Means (k=3)",
+      "Grupos": 3,
+      "Sin asignar": 0,
+      "Silueta": 0.1572,
+      "Davies-Bouldin": 1.9233,
+      "ARI vs NSP": 0.2142,
+      "NMI vs NSP": 0.2224,
+      "Requiere k": "Si",
+      "Detecta ruido": "No"
+    },
+    {
+      "Algoritmo": "DBSCAN (eps=2.0)",
+      "Grupos": 2,
+      "Sin asignar": 213,
+      "Silueta": 0.3874,
+      "Davies-Bouldin": 0.7396,
+      "ARI vs NSP": 0.1965,
+      "NMI vs NSP": 0.134,
+      "Requiere k": "No",
+      "Detecta ruido": "Si"
+    },
+    {
+      "Algoritmo": "Jerarquico Ward (k=3)",
+      "Grupos": 3,
+      "Sin asignar": 0,
+      "Silueta": 0.1348,
+      "Davies-Bouldin": 2.023,
+      "ARI vs NSP": 0.1793,
+      "NMI vs NSP": 0.2297,
+      "Requiere k": "Si",
+      "Detecta ruido": "No"
+    }
+  ]
+}
