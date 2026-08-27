@@ -7,7 +7,7 @@ Inteligencia Artificial. El trabajo aplica el flujo completo de aprendizaje no
 supervisado al conjunto de datos de cardiotocografía `CTG.csv`, que reúne 2 126
 registros de monitoreo fetal descritos por 21 variables cuantitativas.
 
-Autor: Abel Meneses Yupanqui.
+Autor: Abel Meneses Yaranga.
 
 ## Ejecución en Google Colab
 
@@ -35,6 +35,10 @@ esa misma paleta.
 
 `ML_Actividad_CTG.ipynb` es el cuaderno ya ejecutado, con 60 celdas de las
 cuales 32 son de código, y conserva embebidas todas las salidas y los gráficos.
+
+Las filas 2127 y 2128 del archivo original no son pacientes sino las filas de
+resumen de la hoja de cálculo: reproducen, respectivamente, el mínimo y el
+máximo de cada columna, y el cuaderno lo comprueba variable a variable.
 
 `resultados.json` recoge los resultados numéricos que el cuaderno vuelca al
 terminar, y `figuras/` contiene las quince figuras en PNG a su resolución

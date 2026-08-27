@@ -65,7 +65,7 @@ for k in RANGO_K:
     })
 
 barrido_k = pd.DataFrame(registros).set_index("k")
-print("Barrido del numero de grupos (validacion interna y externa):\n")
+print("Barrido del numero de grupos (validacion interna y externa):")
 print(barrido_k.to_string())
 
 # Deteccion analitica del codo de la curva de inercia. Se define como el punto
@@ -219,10 +219,8 @@ contingencia = pd.crosstab(
 contingencia = contingencia[["Normal", "Sospechoso", "Patologico"]]
 porcentajes = (100 * contingencia.div(contingencia.sum(axis=1), axis=0)).round(1)
 
-print("Tabla de contingencia (conteos):\n")
-print(contingencia.to_string())
-print("\nComposicion de cada grupo (% por fila):\n")
-print(porcentajes.to_string())
+print("Contingencia (conteos y, entre parentesis, porcentaje por fila):\n")
+print((contingencia.astype(str) + " (" + porcentajes.astype(str) + " %)").to_string())
 
 ari = adjusted_rand_score(y_nsp, etq_kmeans)
 nmi = normalized_mutual_info_score(y_nsp, etq_kmeans)
@@ -231,13 +229,9 @@ pureza = contingencia.max(axis=1).sum() / contingencia.values.sum()
 # Prueba chi-cuadrado de independencia entre grupo y diagnostico.
 chi2, p_valor, gl, _ = stats.chi2_contingency(contingencia.values)
 
-print("\nMetricas de validacion externa:")
-print("  Indice de Rand ajustado (ARI) : %.4f" % ari)
-print("  Informacion mutua normalizada : %.4f" % nmi)
-print("  Pureza                        : %.4f" % pureza)
-print("  Chi-cuadrado de independencia : %.1f (gl = %d), p = %.3e" % (chi2, gl, p_valor))
-print("\nCon p < 0.001, la asociacion entre los grupos y el diagnostico clinico")
-print("no es atribuible al azar.")
+print("\nValidacion externa: ARI %.4f | NMI %.4f | pureza %.4f" % (ari, nmi, pureza))
+print("Chi-cuadrado de independencia: %.1f (gl = %d), p = %.3e" % (chi2, gl, p_valor))
+print("Con p < 0.001, la asociacion con el diagnostico no es atribuible al azar.")
 
 fig, (a1, a2) = plt.subplots(1, 2, figsize=(11, 3.9))
 
@@ -284,11 +278,11 @@ cruce = pd.crosstab(
 )
 cruce_pct = (100 * cruce.div(cruce.sum(axis=1), axis=0)).round(1)
 
-print("Anomalias de Isolation Forest repartidas por grupo de K-Means:\n")
-print(cruce.to_string())
-print("\nPorcentaje de anomalias dentro de cada grupo:\n")
-print(cruce_pct["Anomalia IF"].to_string())
-print("\nTasa global de anomalias: 5.0 %")
+print("Anomalias de Isolation Forest por grupo de K-Means "
+      "(tasa global: 5.0 %):\n")
+print(pd.DataFrame({"Anomalias": cruce["Anomalia IF"],
+                    "Normales": cruce["Normal IF"],
+                    "% anomalias": cruce_pct["Anomalia IF"]}).to_string())
 
 RES["anomalias_por_grupo"] = cruce_pct["Anomalia IF"].round(1).to_dict()
 ''')
@@ -403,8 +397,16 @@ for eps in [1.6, 1.8, 2.0, 2.2, 2.5, 3.0]:
         })
 
 barrido_dbscan = pd.DataFrame(registros)
-print("Sensibilidad de DBSCAN a sus dos parametros:\n")
-print(barrido_dbscan.to_string(index=False))
+
+# De las 18 combinaciones se imprimen solo las que llegan a formar mas de un
+# grupo, porque son las unicas comparables; de las demas basta con saber cuantas
+# son, ya que todas devuelven un unico grupo mas ruido.
+un_solo_grupo = int((barrido_dbscan["Grupos"] <= 1).sum())
+print("Sensibilidad de DBSCAN: de las %d combinaciones probadas, %d devuelven un"
+      % (len(barrido_dbscan), un_solo_grupo))
+print("unico grupo mas ruido. Las %d restantes son:\n"
+      % (len(barrido_dbscan) - un_solo_grupo))
+print(barrido_dbscan[barrido_dbscan["Grupos"] > 1].to_string(index=False))
 
 dbscan = DBSCAN(eps=EPS_ELEGIDO, min_samples=MIN_SAMPLES)
 etq_dbscan = dbscan.fit_predict(Z_dbscan)
@@ -412,15 +414,13 @@ etq_dbscan = dbscan.fit_predict(Z_dbscan)
 n_grupos_db = len(set(etq_dbscan)) - (1 if -1 in etq_dbscan else 0)
 ruido_db = etq_dbscan == -1
 
-print("\n" + "=" * 78)
-print("DBSCAN definitivo (eps = %.1f, min_samples = %d)" % (EPS_ELEGIDO, MIN_SAMPLES))
-print("=" * 78)
-print("  Grupos encontrados :", n_grupos_db)
-print("  Puntos de ruido    : %d (%.1f %%)" % (ruido_db.sum(), 100 * ruido_db.mean()))
-print("  Tamano de cada grupo:")
-for g in sorted(set(etq_dbscan)):
-    etiqueta = "ruido" if g == -1 else "grupo %d" % g
-    print("    %-10s: %4d observaciones" % (etiqueta, (etq_dbscan == g).sum()))
+tamanos_db = ", ".join(
+    "%s: %d" % ("ruido" if g == -1 else "grupo %d" % g, (etq_dbscan == g).sum())
+    for g in sorted(set(etq_dbscan)))
+print("\nDBSCAN definitivo (eps = %.1f, min_samples = %d): %d grupos y %d puntos "
+      "de ruido (%.1f %%)"
+      % (EPS_ELEGIDO, MIN_SAMPLES, n_grupos_db, ruido_db.sum(), 100 * ruido_db.mean()))
+print("  Tamanos -> %s" % tamanos_db)
 
 RES["dbscan_n_grupos"] = int(n_grupos_db)
 RES["dbscan_ruido"] = int(ruido_db.sum())
@@ -439,10 +439,10 @@ cont_db = pd.crosstab(
     pd.Series([NOMBRES_NSP[v] for v in y_nsp], name="Diagnostico NSP"),
 )[["Normal", "Sospechoso", "Patologico"]]
 
-print("Contingencia DBSCAN frente a NSP:\n")
-print(cont_db.to_string())
-print("\nComposicion por fila (%):\n")
-print((100 * cont_db.div(cont_db.sum(axis=1), axis=0)).round(1).to_string())
+pct_db = (100 * cont_db.div(cont_db.sum(axis=1), axis=0)).round(1)
+print("Contingencia DBSCAN frente a NSP "
+      "(conteos y, entre parentesis, porcentaje por fila):\n")
+print((cont_db.astype(str) + " (" + pct_db.astype(str) + " %)").to_string())
 
 print("\nValidacion externa: ARI = %.4f | NMI = %.4f"
       % (adjusted_rand_score(y_nsp, etq_dbscan),
@@ -563,12 +563,11 @@ print("silueta alta con una particion degenerada NO indica un buen agrupamiento.
 jerarquico = AgglomerativeClustering(n_clusters=3, linkage="ward")
 etq_jerarquico = jerarquico.fit_predict(Z)
 
-print("\nAgrupamiento jerarquico definitivo (Ward, k = 3):")
-print("  Tamanos       :", np.bincount(etq_jerarquico).tolist())
-print("  Silueta       : %.4f" % silhouette_score(Z, etq_jerarquico))
-print("  ARI vs NSP    : %.4f" % adjusted_rand_score(y_nsp, etq_jerarquico))
-print("  ARI vs K-Means: %.4f (concordancia entre ambas particiones)"
-      % adjusted_rand_score(etq_kmeans, etq_jerarquico))
+print("\nWard definitivo (k = 3): tamanos %s, silueta %.4f"
+      % (np.bincount(etq_jerarquico).tolist(), silhouette_score(Z, etq_jerarquico)))
+print("  ARI frente a NSP %.4f | ARI frente a K-Means %.4f (concordancia)"
+      % (adjusted_rand_score(y_nsp, etq_jerarquico),
+         adjusted_rand_score(etq_kmeans, etq_jerarquico)))
 
 RES["comparacion_enlaces"] = comparacion_enlaces.reset_index().to_dict("records")
 RES["ari_jerarquico"] = round(float(adjusted_rand_score(y_nsp, etq_jerarquico)), 4)
@@ -638,9 +637,7 @@ tabla_clustering = pd.DataFrame([
     evaluar_agrupamiento("Jerarquico Ward (k=3)", etq_jerarquico, Z, True, False),
 ]).set_index("Algoritmo")
 
-print("=" * 100)
-print("COMPARACION FINAL DE LOS ALGORITMOS DE AGRUPAMIENTO")
-print("=" * 100)
+print("COMPARACION FINAL DE LOS ALGORITMOS DE AGRUPAMIENTO\n")
 print(tabla_clustering.to_string())
 
 fig, ejes = plt.subplots(1, 3, figsize=(12, 3.9))
@@ -767,29 +764,24 @@ existe una estructura real que describir.
 #   desincronizarse del codigo.
 # Salidas: el archivo resultados.json.
 
-print("=" * 78)
-print("RESUMEN EJECUTIVO")
-print("=" * 78)
-print("Conjunto de datos")
-print("  Registros analizados      : %d (de %d en el archivo original)"
-      % (RES["n_filas_final"], RES["n_filas_final"] + RES["n_filas_eliminadas"]))
-print("  Variables descriptivas    : %d" % RES["n_variables_modelo"])
-print("  Filas eliminadas          : %d artefactos de exportacion" % RES["n_filas_eliminadas"])
-
-print("\nDeteccion de anomalias (mejor modelo: Isolation Forest al 5 %)")
+print("RESUMEN EJECUTIVO\n")
 mejor = max(RES["tabla_anomalias"], key=lambda r: r["Lift"])
-print("  Observaciones marcadas    : %d" % mejor["Marcadas"])
-print("  Patologicos entre ellas   : %.1f %% (tasa base %.1f %%)"
-      % (mejor["% patologicos"], 100 * RES["tasa_base_nsp3"]))
-print("  Lift                      : %.2f" % mejor["Lift"])
-print("  Recall de casos NSP = 3   : %.1f %%" % mejor["Recall NSP=3"])
-
-print("\nAgrupamiento (mejor modelo: K-Means con k = 3)")
-print("  Silueta                   : %.4f" % RES["silueta_kmeans"])
-print("  ARI frente a NSP          : %.4f" % RES["ari_kmeans"])
-print("  NMI frente a NSP          : %.4f" % RES["nmi_kmeans"])
-print("  Pureza                    : %.4f" % RES["pureza_kmeans"])
-print("  Grupos                    :", RES["tamanos_kmeans"])
+print("Datos      : %d registros analizados (de %d en el archivo), %d variables"
+      % (RES["n_filas_final"],
+         RES["n_filas_final"] + RES["n_filas_eliminadas"],
+         RES["n_variables_modelo"]))
+print("             %d filas eliminadas por ser filas de resumen de la hoja"
+      % RES["n_filas_eliminadas"])
+print("\nAnomalias  : Isolation Forest al 5 %%, %d observaciones marcadas"
+      % mejor["Marcadas"])
+print("             %.1f %% patologicos (tasa base %.1f %%), lift %.2f, recall %.1f %%"
+      % (mejor["% patologicos"], 100 * RES["tasa_base_nsp3"],
+         mejor["Lift"], mejor["Recall NSP=3"]))
+print("\nAgrupamiento: K-Means con k = 3, grupos de %s observaciones"
+      % " / ".join(str(v) for v in RES["tamanos_kmeans"].values()))
+print("             silueta %.4f | ARI %.4f | NMI %.4f | pureza %.4f"
+      % (RES["silueta_kmeans"], RES["ari_kmeans"],
+         RES["nmi_kmeans"], RES["pureza_kmeans"]))
 
 
 def convertir(objeto):
@@ -831,12 +823,13 @@ hipótesis de normalidad rendirían peor que los no paramétricos.
 
 La respuesta correcta no consistía en elegir entre la media, la mediana o la
 moda, sino en reconocer que las filas afectadas no eran observaciones. Las 106
-celdas faltantes se concentraban en 3 filas sin diagnóstico, una de ellas una
-fila de totales cuyos valores quedaban fuera de todo rango fisiológico.
-Imputarlas con la media habría fabricado tres pacientes ficticios que, además,
-se habrían convertido en los valores atípicos más extremos del conjunto y
-habrían contaminado tanto la detección de anomalías como los centroides de
-K-Means.
+celdas faltantes se concentraban en 3 filas sin diagnóstico que resultaron ser
+las filas de resumen de la hoja de cálculo original: una de mínimos y otra que
+reproduce el máximo de cada columna, coincidencia comprobada variable a
+variable. Imputarlas con la media habría fabricado tres pacientes ficticios, uno
+de los cuales alcanzaría a la vez el valor extremo de diez variables distintas,
+combinación que no se da en ningún trazado real, y habría contaminado tanto la
+detección de anomalías como los centroides de K-Means.
 
 El experimento controlado del apartado 3.3 aporta la respuesta a la pregunta
 general. Cuando los faltantes son reales y dispersos, la mejor estrategia es la
@@ -946,7 +939,7 @@ Liu, F. T., Ting, K. M., & Zhou, Z.-H. (2008). Isolation Forest. *2008 Eighth
 IEEE International Conference on Data Mining*, 413-422.
 https://doi.org/10.1109/ICDM.2008.17
 
-Meneses Yupanqui, A. (2026). *Actividad de Aprendizaje Automático: detección de
+Meneses Yaranga, A. (2026). *Actividad de Aprendizaje Automático: detección de
 anomalías y técnicas de agrupamiento sobre el conjunto de datos CTG* [Código
 fuente]. GitHub. https://github.com/amenesesy/actividad-ml-ctg
 

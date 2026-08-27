@@ -110,16 +110,16 @@ Z_pca = pca.fit_transform(Z)
 varianza = pca.explained_variance_ratio_
 acumulada = np.cumsum(varianza)
 
-print("Varianza explicada por las primeras componentes principales:\n")
+print("Varianza explicada por las primeras componentes principales:")
 print("  CP    individual    acumulada")
-for i in range(8):
+for i in range(6):
     print("  %2d    %8.1f %%   %8.1f %%" % (i + 1, 100 * varianza[i], 100 * acumulada[i]))
 
 # Componentes necesarias para retener el 80 % y el 90 % de la varianza.
 n80 = int(np.searchsorted(acumulada, 0.80) + 1)
 n90 = int(np.searchsorted(acumulada, 0.90) + 1)
-print("\nComponentes necesarias para el 80 % de varianza:", n80)
-print("Componentes necesarias para el 90 % de varianza:", n90)
+print("  Componentes necesarias: %d para el 80 %% de la varianza y %d para el 90 %%"
+      % (n80, n90))
 
 # Grafico de sedimentacion y varianza acumulada
 fig, (a1, a2) = plt.subplots(1, 2, figsize=(10, 3.5))
@@ -142,12 +142,15 @@ guardar("fig_pca_varianza")
 # componente, y son la clave para interpretarlas.
 cargas = pd.DataFrame(pca.components_[:2].T, index=VARIABLES_MODELO,
                       columns=["CP1", "CP2"]).round(3)
-print("\nVariables con mayor carga en CP1 (negativas y positivas):")
-print(cargas["CP1"].sort_values().head(4).to_string())
-print(cargas["CP1"].sort_values().tail(4).to_string())
-print("\nVariables con mayor carga en CP2:")
-print(cargas["CP2"].sort_values().head(3).to_string())
-print(cargas["CP2"].sort_values().tail(3).to_string())
+def resumen_cargas(cp, n=4):
+    """Devuelve, en una sola linea, las n cargas mas negativas y las n mas positivas."""
+    orden = cargas[cp].sort_values()
+    extremos = list(orden.head(n).items()) + list(orden.tail(n).items())
+    return ", ".join("%s %+.2f" % (v, x) for v, x in extremos)
+
+
+print("\nCargas extremas de CP1:", resumen_cargas("CP1"))
+print("Cargas extremas de CP2:", resumen_cargas("CP2"))
 
 Z2 = Z_pca[:, :2]            # proyeccion 2D reutilizada en todas las figuras
 Z_pca80 = Z_pca[:, :n80]     # espacio reducido al 80 % de varianza
@@ -229,9 +232,7 @@ limite_inf = Q1 - 1.5 * RIC
 limite_sup = Q3 + 1.5 * RIC
 anom_iqr = ((X < limite_inf) | (X > limite_sup)).any(axis=1).values
 
-print("=" * 78)
-print("METODOS UNIVARIANTES DE REFERENCIA")
-print("=" * 78)
+print("METODOS UNIVARIANTES DE REFERENCIA\n")
 print("Z-score (|z| > 3)      : %4d filas marcadas (%.1f %% del conjunto)"
       % (anom_zscore.sum(), 100 * anom_zscore.mean()))
 print("Tukey (1.5 x RIC)      : %4d filas marcadas (%.1f %% del conjunto)"
@@ -383,12 +384,11 @@ anom_iforest = etiquetas_if == -1
 # "mas anomalo" y la lectura resulte natural.
 score_iforest = -iforest.score_samples(Z)
 
-print("Isolation Forest")
-print("  Arboles del ensamble        :", iforest.n_estimators)
-print("  Observaciones marcadas      : %d (%.1f %%)"
-      % (anom_iforest.sum(), 100 * anom_iforest.mean()))
-print("  Umbral de decision aprendido: %.4f" % (-iforest.offset_))
-print("\n  Puntuacion de anormalidad: min = %.3f | mediana = %.3f | max = %.3f"
+print("Isolation Forest: %d arboles, %d observaciones marcadas (%.1f %%), "
+      "umbral aprendido %.4f"
+      % (iforest.n_estimators, anom_iforest.sum(),
+         100 * anom_iforest.mean(), -iforest.offset_))
+print("Puntuacion de anormalidad: min %.3f | mediana %.3f | max %.3f"
       % (score_iforest.min(), np.median(score_iforest), score_iforest.max()))
 
 # Para saber QUE hace anomalas a las observaciones marcadas se compara su perfil
@@ -408,13 +408,14 @@ RES["perfil_iforest"] = perfil.head(8)["Diferencia"].to_dict()
 
     md(r"""
 El perfil de las observaciones marcadas resulta clínicamente coherente y sirve
-como validación cualitativa del método. Las anomalías detectadas se sitúan muy
+como validación cualitativa del método. La tabla anterior recoge las ocho
+variables que más separan a las anomalías del resto del conjunto. Se sitúan muy
 por encima de la media general en `Variance`, con 2,33 desviaciones típicas de
 diferencia, en `DP`, que recoge las deceleraciones prolongadas, con 2,22, en
 `MSTV`, indicador de variabilidad errática a corto plazo, con 1,68, y también en
-`Max`, `Nmax`, `DL` y `DS`. Al mismo tiempo se sitúan muy por debajo en `Mean`,
-con 1,48 desviaciones típicas menos, y de forma análoga en `Mode`, `Median` y
-`Min`.
+`Max`, `Nmax` y `DL`. Al mismo tiempo se sitúan muy por debajo en `Mean`, con
+1,48 desviaciones típicas menos, y en `Mode`, con 1,39 menos; el mismo
+desplazamiento a la baja aparece, algo más atenuado, en `Median` y en `Min`.
 
 Traducido al lenguaje clínico, el algoritmo ha aislado trazados con bradicardia,
 puesto que toda la tendencia central del histograma aparece desplazada a la
@@ -521,9 +522,7 @@ for nombre, mascara in DETECTORES.items():
 
 tabla_anomalias = pd.DataFrame(filas).set_index("Metodo")
 
-print("=" * 92)
-print("EVALUACION DE LOS DETECTORES CONTRA LA ETIQUETA NSP")
-print("=" * 92)
+print("EVALUACION DE LOS DETECTORES CONTRA LA ETIQUETA NSP\n")
 print("Tasa base de casos patologicos: %.1f %%  (%d de %d)\n"
       % (100 * tasa_base, total_patologicos, len(y_nsp)))
 print(tabla_anomalias.to_string())

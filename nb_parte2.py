@@ -28,34 +28,29 @@ saber si conviene reducir la dimensionalidad.
 #   primer control de calidad, y cualquier anomalia estructural debe detectarse
 #   aqui y no cuando ya estan fallando los modelos.
 
-print("=" * 78)
-print("ESTRUCTURA DEL CONJUNTO DE DATOS")
-print("=" * 78)
-print("Numero de filas    :", df_bruto.shape[0])
-print("Numero de columnas :", df_bruto.shape[1])
-print("Memoria ocupada    : %.1f KB" % (df_bruto.memory_usage(deep=True).sum() / 1024))
+print("Dimensiones: %d filas x %d columnas (%.1f KB)"
+      % (df_bruto.shape[0], df_bruto.shape[1],
+         df_bruto.memory_usage(deep=True).sum() / 1024))
 
-# Reparto de tipos de dato: distingue las columnas de texto de las numericas.
-print("\nTipos de dato presentes:")
-print(df_bruto.dtypes.value_counts().to_string())
-
-# Filas completamente duplicadas: en un conjunto de senales clinicas serian
-# sospechosas de un error de exportacion.
-print("\nFilas exactamente duplicadas:", int(df_bruto.duplicated().sum()))
+# Reparto de tipos de dato y filas repetidas. Un duplicado exacto en un conjunto
+# de senales clinicas seria sospechoso de un error de exportacion.
+tipos = ", ".join("%s=%d" % (t, n) for t, n in df_bruto.dtypes.value_counts().items())
+print("Tipos de dato:", tipos)
+print("Filas exactamente duplicadas:", int(df_bruto.duplicated().sum()))
 
 # Ultimas filas del archivo: es donde suelen aparecer los artefactos de las
-# hojas de calculo originales, como filas de totales o separadores en blanco.
-print("\nUltimas 4 filas del archivo (primeras 12 columnas):")
-print(df_bruto.iloc[-4:, :12].to_string())
+# hojas de calculo originales, como filas de resumen o separadores en blanco.
+print("\nUltimas 4 filas del archivo (columnas 8 a 17):")
+print(df_bruto.iloc[-4:, 8:18].to_string())
 ''')
 
     md(r"""
 La inspección de las últimas filas revela el primer hallazgo importante del
 trabajo, y es que el archivo no termina en un registro clínico. Las tres últimas
 líneas son residuos de la hoja de cálculo original `CTG.xls`: una fila
-completamente vacía, una fila con ceros de relleno y una fila de totales que
-agrega columnas como `FM`, `UC` o `ASTV`. No son pacientes, sino artefactos de
-exportación. El detalle condiciona por completo la sección 3, porque son
+completamente vacía, una fila con ceros de relleno y una tercera que repite el
+valor máximo de cada columna. No son pacientes, sino las filas de resumen que
+la hoja de cálculo dejó al pie. El detalle condiciona por completo la sección 3, porque son
 exactamente esas tres filas las que generan todos los valores faltantes del
 conjunto.
 
@@ -85,13 +80,18 @@ desc["cv"] = desc["std"] / desc["mean"].replace(0, np.nan)
 
 desc = desc.round(2)
 
-print("Estadisticos descriptivos de las", desc.shape[0], "variables numericas:\n")
-print(desc[["count", "mean", "std", "min", "50%", "max", "asimetria", "curtosis"]].to_string())
+# Los descriptivos se calculan para las 37 columnas numericas, pero se imprime
+# una seleccion de doce que cubre los tres aspectos que se comentan despues: el
+# conteo irregular, la disparidad de escalas y la asimetria de los conteos.
+SELECCION = ["LB", "AC", "ASTV", "MSTV", "ALTV", "MLTV",
+             "DS", "DP", "Width", "Mean", "Variance", "Nzeros"]
+print("Descriptivos de 12 de las %d variables numericas:\n" % desc.shape[0])
+print(desc.loc[SELECCION,
+               ["count", "mean", "std", "min", "max", "asimetria", "curtosis"]].to_string())
 
 # Se guardan las variables mas asimetricas, que son las que mas condicionan la
 # eleccion del metodo de deteccion de anomalias.
 RES["top_asimetria"] = desc["asimetria"].abs().sort_values(ascending=False).head(6).round(2).to_dict()
-desc
 ''')
 
     md(r"""
@@ -128,43 +128,33 @@ muchos falsos positivos, y favorece de entrada a los métodos no paramétricos.
 
 # Categoricas almacenadas como texto
 cat_texto = df_bruto.select_dtypes(include=["object"]).columns.tolist()
-print("Variables categoricas de tipo texto:", cat_texto, "\n")
-
+print("Categoricas de texto (cardinalidad sobre %d filas):" % len(df_bruto))
 for col in cat_texto:
     n_cat = df_bruto[col].nunique()
-    print("  " + col + ": " + str(n_cat) + " categorias distintas "
-          + "(cardinalidad " + str(round(100 * n_cat / len(df_bruto), 1)) + "% de las filas)")
-    print("    5 mas frecuentes: " + str(df_bruto[col].value_counts().head(5).to_dict()))
+    print("  %-9s %5d categorias distintas  (%.1f %% de las filas)"
+          % (col, n_cat, 100 * n_cat / len(df_bruto)))
+print("  La cardinalidad casi maxima las identifica como IDENTIFICADORES.")
 
-print("\n" + "-" * 78)
-print("La cardinalidad casi maxima confirma que las tres son IDENTIFICADORES")
-print("del registro y no variables analizables.")
-print("-" * 78 + "\n")
-
-# Categoricas codificadas como numeros
-cat_numericas = ["Tendency", "CLASS", "NSP"]
+# Categoricas codificadas como numeros. Tratarlas como continuas seria un error
+# conceptual, porque la media de NSP no significa nada.
 ETIQUETAS_NSP = {1: "Normal", 2: "Sospechoso", 3: "Patologico"}
-ETIQUETAS_TEND = {-1: "Desplazado a la izquierda", 0: "Simetrico", 1: "Desplazado a la derecha"}
+frec_nsp = df_bruto["NSP"].value_counts(dropna=False).sort_index()
+print("\nFrecuencias de NSP (estado fetal):")
+for v, n in frec_nsp.items():
+    print("  %-11s %5d   %5.1f %%"
+          % (ETIQUETAS_NSP.get(v, "artefacto"), n, 100 * n / frec_nsp.sum()))
 
-for col in cat_numericas:
-    frec = df_bruto[col].value_counts(dropna=False).sort_index()
-    prop = (100 * frec / frec.sum()).round(2)
-    tabla = pd.DataFrame({"frecuencia": frec, "porcentaje": prop})
-    if col == "NSP":
-        tabla.insert(0, "significado", [ETIQUETAS_NSP.get(i, "artefacto") for i in tabla.index])
-    if col == "Tendency":
-        tabla.insert(0, "significado", [ETIQUETAS_TEND.get(i, "artefacto") for i in tabla.index])
-    print("Frecuencias de '" + col + "':")
-    print(tabla.to_string(), "\n")
+frec_class = df_bruto["CLASS"].value_counts().sort_values()
+print("\nCLASS   : 10 patrones morfologicos, de %d a %d casos por categoria"
+      % (frec_class.iloc[0], frec_class.iloc[-1]))
 
 # Coherencia de la codificacion one-hot de CLASS
 COLS_ONEHOT = ["A", "B", "C", "D", "E", "AD", "DE", "LD", "FS", "SUSP"]
 suma_onehot = df_bruto[COLS_ONEHOT].sum(axis=1)
-print("Suma por fila de las 10 indicadoras one-hot:",
+print("\nSuma por fila de las 10 indicadoras one-hot:",
       suma_onehot.value_counts(dropna=False).to_dict())
-print("Al ser constante e igual a 1, se trata de una recodificacion EXACTA de")
-print("CLASS: no aportan informacion nueva e introducen una dependencia lineal")
-print("perfecta que rompe los metodos basados en la matriz de covarianzas.")
+print("Constante e igual a 1: es una recodificacion EXACTA de CLASS, que no")
+print("aporta informacion nueva y crea una dependencia lineal perfecta.")
 
 RES["frec_nsp"] = df_bruto["NSP"].value_counts(dropna=False).sort_index().to_dict()
 ''')
@@ -308,19 +298,23 @@ ric = q3 - q1
 atipicos_por_var = ((datos_validos < (q1 - 1.5 * ric)) | (datos_validos > (q3 + 1.5 * ric))).sum()
 atipicos_por_var = atipicos_por_var.sort_values(ascending=False)
 
-print("Numero de valores atipicos univariantes (criterio de Tukey) por variable:\n")
-print(atipicos_por_var.to_string())
+fuera = ((datos_validos < (q1 - 1.5 * ric)) | (datos_validos > (q3 + 1.5 * ric)))
+print("Atipicos univariantes (criterio de Tukey), 8 variables mas afectadas:")
+print(atipicos_por_var.head(8).to_string())
+print("\nFilas con algun atipico en alguna de las 21 variables: %d de %d (%.1f %%)"
+      % (fuera.any(axis=1).sum(), len(datos_validos),
+         100 * fuera.any(axis=1).mean()))
 RES["atipicos_univariantes"] = atipicos_por_var.head(8).to_dict()
 ''')
 
     md(r"""
-Los histogramas confirman lo que ya anticipaban la asimetría y la curtosis. Solo
-`LB`, `Mean`, `Mode` y `Median` son aproximadamente simétricas; el resto son
-distribuciones fuertemente sesgadas a la derecha, con una masa enorme de ceros
-en los conteos de eventos como `DS`, `DP` o `Nzeros`.
+Los histogramas de la figura 2 confirman lo que ya anticipaban la asimetría y la
+curtosis. Solo `LB`, `Mean`, `Mode` y `Median` son aproximadamente simétricas; el
+resto son distribuciones fuertemente sesgadas a la derecha, con una masa enorme
+de ceros en los conteos de eventos como `DS`, `DP` o `Nzeros`.
 
-Los diagramas de caja muestran que prácticamente todas las variables tienen
-puntos fuera de los bigotes, lo que constituye una advertencia metodológica de
+Los diagramas de caja de la figura 3 muestran que prácticamente todas las
+variables tienen puntos fuera de los bigotes, lo que constituye una advertencia metodológica de
 primer orden. Si se aplicara una regla univariante y se eliminara toda fila con
 algún valor atípico, se perdería una fracción enorme del conjunto y, además,
 serían precisamente los casos clínicamente más interesantes los que
@@ -340,30 +334,26 @@ desaparecerían. La detección de anomalías tiene que ser multivariante.
 # Salidas: la serie faltantes y los indices filas_con_na.
 
 faltantes = df_bruto.isnull().sum()
-faltantes_pos = faltantes[faltantes > 0].sort_values(ascending=False)
 
-print("=" * 78)
-print("DIAGNOSTICO DE VALORES FALTANTES")
-print("=" * 78)
-print("Celdas faltantes en total :", int(faltantes.sum()))
-print("Columnas afectadas        :", int((faltantes > 0).sum()), "de", df_bruto.shape[1])
-print("Porcentaje sobre el total : %.3f %%"
-      % (100 * faltantes.sum() / (df_bruto.shape[0] * df_bruto.shape[1])))
+print("Celdas faltantes: %d (%.3f %% del total), en %d de %d columnas"
+      % (faltantes.sum(),
+         100 * faltantes.sum() / (df_bruto.shape[0] * df_bruto.shape[1]),
+         (faltantes > 0).sum(), df_bruto.shape[1]))
+print("Faltantes por columna: %s" % faltantes[faltantes > 0].value_counts().to_dict()
+      + "  (lectura: n columnas con n faltantes)")
 
-print("\nFaltantes por columna (solo las afectadas):")
-print(faltantes_pos.to_string())
-
-# Analisis del patron: se cuenta cuantos faltantes tiene CADA FILA.
+# Analisis del patron: se cuenta cuantos faltantes tiene CADA FILA. La decision
+# de imputar o eliminar depende de aqui, no del recuento global.
 na_por_fila = df_bruto.isnull().sum(axis=1)
 filas_con_na = df_bruto.index[na_por_fila > 0]
 
-print("\nFilas con al menos un valor faltante:", len(filas_con_na))
-print("Indices de esas filas:", list(filas_con_na))
-print("\nNumero de valores faltantes en cada una de ellas (sobre 40 columnas):")
-print(na_por_fila[filas_con_na].to_string())
+print("\nFilas con al menos un faltante: %d  ->  indices %s"
+      % (len(filas_con_na), list(filas_con_na)))
+print("Faltantes en cada una de esas filas (sobre 40 columnas): %s"
+      % na_por_fila[filas_con_na].to_dict())
 
-print("\nContenido de las filas sospechosas (columnas 8 a 20):")
-print(df_bruto.loc[filas_con_na].iloc[:, 8:20].to_string())
+print("\nContenido de esas tres filas (columnas 8 a 17):")
+print(df_bruto.loc[filas_con_na].iloc[:, 8:18].to_string())
 
 RES["faltantes_total"] = int(faltantes.sum())
 RES["filas_con_na"] = [int(i) for i in filas_con_na]
@@ -371,16 +361,17 @@ RES["filas_con_na"] = [int(i) for i in filas_con_na]
 
     md(r"""
 El diagnóstico es concluyente y desmonta la lectura ingenua del problema. Hay
-106 celdas faltantes repartidas en 39 columnas, pero todas ellas se concentran
-en solo 3 filas, las de índice 2126, 2127 y 2128, que son las tres últimas del
-archivo. Esas tres filas no son pacientes con datos incompletos: son artefactos
-de exportación de la hoja de cálculo original. La primera está completamente
-vacía, la segunda contiene ceros de relleno en `DL`, `DS`, `DP` y `DR`, y la
-tercera es una fila de totales con valores como `FM` igual a 564 o `MLTV` igual
-a 50,7, que están varios órdenes de magnitud fuera del rango clínico de
-cualquiera de esas variables. Ninguna de las tres tiene valor en `NSP` ni en
-`CLASS`, es decir, ningún obstetra las diagnosticó, sencillamente porque no
-existen como observaciones.
+106 celdas faltantes que afectan a las 40 columnas del archivo, pero todas ellas
+se concentran en solo 3 filas, las de índice 2126, 2127 y 2128, que son las tres
+últimas. Esas tres filas no son pacientes con datos incompletos: son las filas
+de resumen que la hoja de cálculo original dejó al pie de la tabla. La primera
+está completamente vacía. La segunda contiene ceros en `DL`, `DS`, `DP` y `DR`,
+que son exactamente los mínimos de esas cuatro columnas. Y la tercera reproduce
+el máximo de las diez columnas en las que tiene valor, desde `FM` igual a 564
+hasta `MLTV` igual a 50,7, coincidencia que se verifica una a una en el apartado
+siguiente. Ninguna de las tres tiene valor en `NSP` ni en `CLASS`, es decir,
+ningún obstetra las diagnosticó, sencillamente porque no existen como
+observaciones.
 
 ## 3.2 Decisión: eliminar frente a imputar
 
@@ -397,15 +388,17 @@ eliminar es correcto porque no se está descartando información clínica, mient
 que imputar fabricaría tres pacientes ficticios. El segundo es el coste, que
 resulta despreciable, ya que se pierden 3 filas de 2 129, apenas el 0,14 % del
 conjunto. El tercero, y el más importante para este trabajo, es el efecto sobre
-los modelos: la fila de totales, de conservarse imputada, se convertiría en el
-valor atípico más extremo de todo el conjunto y capturaría buena parte de la
-capacidad de detección, además de desplazar los centroides de K-Means, que no
-son robustos frente a valores extremos. A ello se añade un argumento de
+los modelos: la fila de máximos, de conservarse imputada, sería un registro
+sintético que alcanza a la vez el valor extremo de diez variables distintas,
+combinación que no se da en ningún trazado real y que la convertiría en el
+atípico multivariante más señalado del conjunto, además de desplazar los
+centroides de K-Means, que no son robustos frente a valores extremos. A ello se
+añade un argumento de
 trazabilidad, porque la imputación enmascararía un error de origen que conviene
 dejar documentado.
 
 Imputar con la media sería, por añadidura, internamente incoherente, ya que se
-estaría usando la media de una columna que la propia fila de totales ha
+estaría usando la media de una columna que la propia fila de resumen ha
 contaminado para completar esa misma fila.
 
 De todo ello se deriva una regla general que vale la pena retener: antes de
@@ -439,12 +432,21 @@ print("\nValores faltantes tras la depuracion:", int(faltantes_despues))
 assert faltantes_despues == 0, "Quedan faltantes: revisar el criterio de depuracion"
 print("Verificacion superada: el conjunto esta completo.")
 
-# Verificacion de coherencia de los rangos clinicos.
-print("\nRangos de tres variables de control tras la depuracion:")
-for col in ["LB", "FM", "MLTV"]:
-    print("  %-6s min = %7.1f   max = %7.1f" % (col, df[col].min(), df[col].max()))
-print("\nLos maximos vuelven a rangos fisiologicos, lo que confirma que la fila")
-print("de totales, que aportaba FM = 564 y MLTV = 50.7, ha desaparecido.")
+# Verificacion de que las filas eliminadas eran filas de resumen y no
+# observaciones clinicas: la ultima reproduce el MAXIMO de cada columna en la
+# que tiene valor, y la penultima, el MINIMO. Esta comprobacion demuestra su
+# naturaleza y explica ademas por que los maximos del conjunto no cambian al
+# eliminarlas: la fila de resumen los copiaba de registros reales.
+COLS_RESUMEN = ["FM", "UC", "ASTV", "MSTV", "ALTV", "MLTV", "DL", "DS", "DP", "DR"]
+iguales_max = int((df_bruto.loc[2128, COLS_RESUMEN].values
+                   == df[COLS_RESUMEN].max().values).sum())
+iguales_min = int((df_bruto.loc[2127, ["DL", "DS", "DP", "DR"]].values
+                   == df[["DL", "DS", "DP", "DR"]].min().values).sum())
+print("\nNaturaleza de las filas eliminadas:")
+print("  la fila 2128 coincide con el MAXIMO de su columna en %d de %d variables"
+      % (iguales_max, len(COLS_RESUMEN)))
+print("  la fila 2127 coincide con el MINIMO de su columna en %d de 4 variables"
+      % iguales_min)
 
 RES["n_filas_final"] = int(len(df))
 RES["n_filas_eliminadas"] = int(n_antes - len(df))
@@ -604,12 +606,13 @@ principales posterior: su error medio en la matriz de correlaciones es de 0,006,
 cuatro veces menor que el de la media, que llega a 0,027, y seis veces menor que
 el de la moda, que alcanza 0,038.
 
-La figura muestra un aspecto que el RMSE no llega a capturar. La media, dibujada
-en azul, crea un pico artificial justo en el valor medio de `ASTV` y de `MSTV`,
-una moda que no existe en la distribución real. La moda, en verde, resulta aún
-peor, porque concentra masa en el valor más frecuente y deforma por completo la
-distribución de `LB` y de `ASTV`. La curva del método de vecinos, en rojo, se
-superpone casi exactamente a la distribución original.
+La figura 4 muestra un aspecto que el RMSE no llega a capturar. La media,
+dibujada en cian claro, y la mediana, en rojo, crean un pico artificial justo
+en el valor central de `ASTV` y de `MSTV`, una moda que no existe en la
+distribución real. La moda, en gris, deforma por completo el pico de `LB` y de
+`MSTV`, porque concentra masa en el valor más frecuente. La curva del método de
+vecinos, en cian oscuro, se superpone casi exactamente al área sombreada que
+representa la distribución original.
 
 En conclusión, si en este conjunto hubiera habido faltantes reales y dispersos,
 la elección correcta habría sido la imputación por vecinos más cercanos, y por

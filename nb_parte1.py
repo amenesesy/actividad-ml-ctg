@@ -17,7 +17,7 @@ def construir():
 
 **Asignatura:** Aprendizaje Automático, Maestría en Inteligencia Artificial
 
-**Autor:** Abel Meneses Yupanqui
+**Autor:** Abel Meneses Yaranga
 
 **Repositorio del código:** https://github.com/amenesesy/actividad-ml-ctg
 
@@ -367,12 +367,12 @@ tabla_dic = pd.DataFrame(
     columns=["Variable", "Rol", "Descripcion"],
 )
 
-print("Total de columnas documentadas:", len(tabla_dic), "\n")
-print("Reparto por rol:")
-print(tabla_dic["Rol"].value_counts().to_string())
+print("Columnas documentadas:", len(tabla_dic), "| reparto por rol:")
+for rol, n in tabla_dic["Rol"].value_counts().items():
+    ejemplos = ", ".join(tabla_dic.loc[tabla_dic["Rol"] == rol, "Variable"].head(4))
+    print("  %-18s %2d   (%s%s)" % (rol, n, ejemplos, ", ..." if n > 4 else ""))
 
 RES["n_columnas"] = int(df_bruto.shape[1])
-tabla_dic
 ''')
 
     md(r"""

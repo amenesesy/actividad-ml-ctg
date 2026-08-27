@@ -39,17 +39,17 @@ DIR_FIGURAS = pathlib.Path("figuras")
 
 TAM_CUERPO = 12                      # exigido: Calibri 12
 INTERLINEADO = round(TAM_CUERPO * 1.5)   # exigido: interlineado 1,5
-TAM_CODIGO = 5.6                     # monoespaciada para los listados de codigo
+TAM_CODIGO = 5.8                     # monoespaciada para los listados de codigo
 TAM_SALIDA = 6.2                     # monoespaciada para las salidas de consola
-MAX_LINEAS_SALIDA = 11               # recorte de salidas muy largas
-ANCHO_CODIGO = 143                   # caracteres antes de partir una linea
+MAX_LINEAS_SALIDA = 17               # recorte de salidas muy largas
+ANCHO_CODIGO = 131                   # caracteres antes de partir una linea
 
 # Maquetacion de las figuras. La regla es que ninguna se reduzca por debajo
 # de REDUCCION_MAX respecto de su tamano natural, para que la tipografia
 # interior siga siendo legible en papel.
 ANCHO_TEXTO = 17.0 * cm               # ancho util de la caja de texto
 DPI_FIGURAS = 200                     # resolucion con la que se guardan
-REDUCCION_MAX = 0.68                  # reduccion maxima admitida
+REDUCCION_MAX = 0.80                  # reduccion maxima admitida
 ALTO_MAX_FIGURA = 9.5 * cm           # alto maximo de una figura
 
 FUENTES = {
@@ -530,7 +530,7 @@ ALTO_FILA_DATO = 0.38 * cm       # cada una de las dos filas de datos
 MARGEN_ENCABEZADO = 0.75 * cm    # distancia del borde superior de la hoja
 
 ASIGNATURA = "Aprendizaje Automático"
-APELLIDOS = "Meneses Yupanqui"
+APELLIDOS = "Meneses Yaranga"
 NOMBRE = "Abel"
 FECHA = "27/08/2026"
 
@@ -624,7 +624,7 @@ def portada(estilos):
         Spacer(1, 2.2 * cm),
         Paragraph("<b>Asignatura:</b> Aprendizaje Automático", estilos["portada_dato"]),
         Paragraph("<b>Programa:</b> Maestría en Inteligencia Artificial", estilos["portada_dato"]),
-        Paragraph("<b>Autor:</b> Abel Meneses Yupanqui", estilos["portada_dato"]),
+        Paragraph("<b>Autor:</b> Abel Meneses Yaranga", estilos["portada_dato"]),
         Spacer(1, 1.2 * cm),
         Paragraph("<b>Conjunto de datos:</b> CTG.csv, con 2 126 registros de monitoreo fetal",
                   estilos["portada_dato"]),
@@ -746,7 +746,7 @@ def main():
         leftMargin=2.0 * cm, rightMargin=2.0 * cm,
         topMargin=2.25 * cm, bottomMargin=1.60 * cm,
         title="Deteccion de anomalias y tecnicas de agrupamiento (CTG)",
-        author="Abel Meneses Yupanqui",
+        author="Abel Meneses Yaranga",
         subject="Actividad de Aprendizaje Automatico",
     )
     marco = Frame(documento.leftMargin, documento.bottomMargin,
