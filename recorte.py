@@ -15,7 +15,7 @@ from PIL import Image
 
 FRANJA_GRAFICO = {
     "2.4": (884, 1699),
-    "2.5": (998, 99999),
+    "2.5": (998, 2155),
     "3.4": (941, 99999),
     "4.2": (1366, 1737),
     "5.2": (1202, 99999),
@@ -27,11 +27,6 @@ FRANJA_GRAFICO = {
     "6.8": (1227, 99999),
     "6.9": (1074, 1494),
     "6.10": (1275, 99999),
-    # La captura de la celda 5.3 arrastra, por un fallo al unir los recortes de
-    # pantalla, un bloque de texto que pertenece a la seccion 7 y no la salida de
-    # la celda. Se conserva solo el cuadro de codigo; la salida real se reproduce
-    # en el informe debajo de la captura.
-    "5.3": (915, 99999),
 }
 
 

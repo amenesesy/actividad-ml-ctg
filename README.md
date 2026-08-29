@@ -43,10 +43,10 @@ captura está anotada en `recorte.py`, comprobada una a una sobre la imagen. Con
 ese reparto, y con la narrativa sintetizada, el informe cabe en las 40 páginas
 que fija el enunciado.
 
-Tres capturas no alcanzan a mostrar toda la salida de su celda: en la 2.4 el
-área de resultados de Colab la recorta por altura, y en la 2.5 y la 5.3 la toma
-de pantalla no llegó al final. En esos tres casos el informe reproduce debajo de
-la captura el texto que falta, leído del cuaderno ya ejecutado.
+Colab encierra las salidas gráficas en un marco de mil píxeles de alto, de modo
+que en las celdas 2.4 y 2.5 el final de la salida de texto quedaba fuera del
+área visible. Las capturas de esas dos celdas se tomaron con ese marco ajustado
+a la altura real del contenido, así que reproducen la salida completa.
 
 `ML_Actividad_CTG.ipynb` es el cuaderno ya ejecutado, con 60 celdas de las
 cuales 32 son de código, y conserva embebidas todas las salidas y los gráficos.

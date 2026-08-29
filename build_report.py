@@ -48,12 +48,6 @@ DIR_FIGURAS = pathlib.Path("figuras")
 DIR_CAPTURAS = pathlib.Path("capturas")
 DIR_RECORTADAS = pathlib.Path("capturas_recortadas")
 
-# Tres capturas no alcanzan a mostrar toda la salida de su celda: en la 2.4 el
-# area de resultados de Colab la recorta por altura, y en la 2.5 y la 5.3 la
-# toma de pantalla no llego al final. Se reproduce debajo de la captura el texto
-# que falta, leido del cuaderno ya ejecutado. El valor es el numero de lineas
-# finales que se reponen, o None para reponer la salida entera.
-SALIDA_FUERA_DE_CAPTURA = {"2.4": 1, "2.5": None, "5.3": None}
 ANCHO_CAPTURA = 14.6 * cm
 
 TAM_CUERPO = 12                      # exigido: Calibri 12
@@ -842,30 +836,9 @@ def main():
             elementos.append(Spacer(1, 4))
 
         # ---- Salida de consola -----------------------------------------------
-        # En las capturas la salida ya viene incluida en la propia imagen, salvo
-        # en las tres celdas cuya captura no llego a recogerla entera.
+        # Solo para una celda que no tuviera captura: en las capturas la salida
+        # ya viene incluida en la propia imagen.
         salida = None if captura is not None else texto_de_salidas(celda)
-        if captura is not None and clave in SALIDA_FUERA_DE_CAPTURA:
-            completa = texto_de_salidas(celda)
-            if completa:
-                cuantas = SALIDA_FUERA_DE_CAPTURA[clave]
-                lineas = completa.split("\n")
-                while lineas and not lineas[0].strip():
-                    lineas.pop(0)
-                if cuantas:
-                    lineas = [l for l in lineas if l.strip()][-cuantas:]
-                elementos.append(Spacer(1, 2))
-                elementos.append(Paragraph(
-                    "Continuación de la salida de la celda, que queda fuera del "
-                    "área visible de la captura:",
-                    ParagraphStyle("cont", parent=estilos["cuerpo"], fontSize=9,
-                                   leading=11,
-                                   textColor=colors.HexColor("#444444"),
-                                   spaceAfter=2)))
-                elementos.append(bloque_monoespaciado(
-                    "\n".join(lineas), estilos["salida"], FONDO_SALIDA,
-                    BORDE_SALIDA, int(ANCHO_CODIGO * 1.22)))
-                elementos.append(Spacer(1, 6))
         if salida:
             elementos.append(Spacer(1, 2))
             elementos.append(bloque_monoespaciado(salida, estilos["salida"],
