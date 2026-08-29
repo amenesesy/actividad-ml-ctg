@@ -9,40 +9,34 @@ def construir():
     md(r"""
 # 4. Preparación de la matriz de características
 
-Antes de aplicar los algoritmos hay que decidir con qué columnas se los
-alimenta, y es probablemente la decisión de mayor impacto de todo el trabajo.
-Se toma a partir de las evidencias reunidas en el análisis exploratorio.
+Decidir con qué columnas se alimenta a los algoritmos es la decisión de mayor
+impacto del trabajo, y se toma con las evidencias del análisis exploratorio.
 
 Se descartan `FileName`, `Date`, `SegFile`, `b` y `e` porque identifican el
-registro y no describen al feto, según se vio en el apartado 2.3. Se descarta
-`LBE` por ser un duplicado exacto de `LB`, y `DR` por ser constante e igual a
-cero, de manera que su varianza es nula y no aporta información alguna. Se
-descarta `Width` porque es una combinación lineal exacta de otras dos columnas.
-Se descartan las diez indicadoras que van de `A` a `SUSP` por tratarse de la
-codificación disyuntiva de la etiqueta `CLASS`. Y se apartan `CLASS` y `NSP`,
-que quedan reservadas como verdad de referencia externa. Las veinte columnas
-restantes son descriptores cuantitativos genuinos del trazado y constituyen la
-matriz de trabajo.
+registro y no describen al feto; `LBE` por duplicar exactamente a `LB`; `DR` por
+ser constante e igual a cero, con varianza nula; `Width` por ser combinación
+lineal exacta de otras dos columnas; y las diez indicadoras de `A` a `SUSP` por
+ser la codificación disyuntiva de `CLASS`. Se apartan `CLASS` y `NSP` como verdad
+de referencia externa. Las veinte columnas restantes son descriptores genuinos
+del trazado y forman la matriz de trabajo.
 
 ## 4.1 Por qué importa eliminar la variable Width
 
-La igualdad entre `Width` y la diferencia de `Max` y `Min` se cumple en las
-2 126 filas sin una sola excepción. Eso hace que la matriz de datos tenga rango
-20 con 21 columnas, es decir, que su matriz de covarianzas sea singular y no
-pueda invertirse. La distancia de Mahalanobis exige exactamente esa inversión,
-de modo que mantener `Width` haría fracasar, o al menos volvería numéricamente
-inestable, uno de los cinco detectores de la sección 5. Es un ejemplo claro de
-por qué el análisis exploratorio debe preceder al modelado.
+La igualdad entre `Width` y la diferencia de `Max` y `Min` se cumple en las 2 126
+filas sin excepción, lo que deja la matriz con rango 20 sobre 21 columnas: su
+matriz de covarianzas es singular y no puede invertirse. La distancia de
+Mahalanobis exige esa inversión, de modo que mantener `Width` haría fracasar uno
+de los cinco detectores de la sección 5. Es un ejemplo de por qué el análisis
+exploratorio debe preceder al modelado.
 
 ## 4.2 Por qué estandarizar
 
 K-Means, DBSCAN, el factor local de atipicidad y la distancia de Mahalanobis se
-basan todos ellos en distancias. Con las escalas originales, `Variance`, cuyo
-rango va de 0 a 269, pesaría cientos de veces más que `MSTV`, que se mueve entre
-0 y 7, y lo haría únicamente por su unidad de medida. La estandarización, que
-transforma cada valor restándole la media de su columna y dividiéndolo entre la
-desviación típica, deja todas las variables con media cero y desviación uno, de
-manera que cada descriptor contribuye en igualdad de condiciones.
+basan en distancias. Con las escalas originales `Variance`, de 0 a 269, pesaría
+cientos de veces más que `MSTV`, entre 0 y 7, solo por su unidad de medida. La
+estandarización resta a cada valor la media de su columna y lo divide entre la
+desviación típica, dejando todas las variables con media cero y desviación uno,
+de manera que cada descriptor contribuye en igualdad de condiciones.
 """)
 
     code(r'''
@@ -161,53 +155,45 @@ RES["pca_n80"] = n80
 
     md(r"""
 La primera componente explica el 27,5 % de la varianza y la segunda el 15,8 %,
-de modo que entre ambas apenas superan el 43 %, y hacen falta nueve componentes
-para alcanzar el 80 %. El problema no es, por tanto, de dimensionalidad trivial:
-no puede resumirse en dos ejes sin perder información sustancial. Las dos
-primeras componentes se emplearán únicamente para visualizar, nunca como entrada
-única de un modelo.
+de modo que entre ambas apenas superan el 43 % y hacen falta nueve para alcanzar
+el 80 %. El problema no es de dimensionalidad trivial: no puede resumirse en dos
+ejes sin perder información sustancial, así que las dos primeras componentes se
+usarán solo para visualizar.
 
-Las cargas admiten una lectura clínica directa. La primera componente contrapone
-las variables de tendencia central y anchura del histograma, `Mean`, `Mode`,
-`Median` y `Max`, frente a las de variabilidad anormal, `ASTV` y `ALTV`. La
-segunda separa la actividad del registro, medida por `AC`, `FM` y `UC`, de las
-deceleraciones. Son, en esencia, los dos ejes con los que un obstetra describiría
-un trazado.
+Las cargas admiten lectura clínica directa. La primera componente contrapone las
+variables de tendencia central y anchura del histograma, `Mean`, `Mode`, `Median`
+y `Max`, frente a las de variabilidad anormal, `ASTV` y `ALTV`. La segunda separa
+la actividad del registro, medida por `AC`, `FM` y `UC`, de las deceleraciones.
+Son los dos ejes con los que un obstetra describiría un trazado.
 
 # 5. Detección de anomalías
 
 ## 5.1 Planteamiento
 
-Una anomalía, o valor atípico, es una observación que se aparta del
-comportamiento mayoritario del conjunto. En este problema la pregunta operativa
-es si resulta posible señalar automáticamente los trazados fetales inusuales sin
-recurrir al diagnóstico del obstetra.
+Una anomalía es una observación que se aparta del comportamiento mayoritario del
+conjunto. La pregunta operativa aquí es si se pueden señalar automáticamente los
+trazados inusuales sin recurrir al diagnóstico del obstetra.
 
-Para responderla se aplican cinco técnicas pertenecientes a tres familias
-distintas. El Z-score y la regla de Tukey, también llamada criterio del rango
-intercuartílico, son métodos estadísticos univariantes: el primero marca una
-observación cuando alguno de sus valores tipificados supera 3 en valor absoluto
-y asume por tanto la normalidad de cada variable; el segundo la marca cuando
-algún valor cae fuera del intervalo delimitado por el primer cuartil menos una
-vez y media el rango intercuartílico y el tercer cuartil más esa misma cantidad,
-y no asume ninguna distribución, aunque sigue examinando las variables de una en
-una. La distancia de Mahalanobis con estimación robusta de la covarianza es un
-método estadístico multivariante que mide la separación al centro de la nube
-ponderándola por la correlación entre variables, y presupone normalidad
-multivariante. Isolation Forest es un ensamble de árboles que se apoya en la
-idea de que los puntos raros se aíslan con muy pocos cortes aleatorios, y no
-asume ninguna distribución. Por último, el factor local de atipicidad, conocido
-como LOF, compara la densidad de cada punto con la de sus vecinos y tampoco
+Se aplican cinco técnicas de tres familias. El Z-score y la regla de Tukey son
+univariantes: el primero marca una observación cuando algún valor tipificado
+supera 3 en valor absoluto, y asume normalidad; la segunda la marca cuando algún
+valor cae fuera del intervalo entre el primer cuartil menos vez y media el rango
+intercuartílico y el tercer cuartil más esa cantidad, sin asumir distribución
+alguna pero examinando las variables de una en una. La distancia de Mahalanobis
+con estimación robusta de la covarianza es multivariante, mide la separación al
+centro ponderándola por la correlación y presupone normalidad multivariante.
+Isolation Forest es un ensamble de árboles apoyado en que los puntos raros se
+aíslan con pocos cortes aleatorios. Y el factor local de atipicidad, LOF, compara
+la densidad de cada punto con la de sus vecinos; ninguno de los dos últimos
 impone supuestos distribucionales.
 
-Para que la comparación sea justa, los métodos multivariantes se calibran de
-manera que señalen la misma proporción de observaciones, el 5 %. La evaluación
-no se limita a contar cuántas marcan: se recurre a la etiqueta `NSP`, que ningún
-modelo ha visto, para medir el enriquecimiento en casos patológicos, magnitud
-que en minería de datos se conoce como lift y que se define como el cociente
-entre la probabilidad de que una observación sea patológica dado que el detector
-la ha marcado y la probabilidad de que lo sea sin más información. Un lift igual
-a 1 significa que el detector no aporta nada frente a elegir al azar.
+Para que la comparación sea justa, los métodos multivariantes se calibran al
+mismo 5 % de observaciones marcadas. La evaluación no se limita a contar: se
+recurre a `NSP`, que ningún modelo ha visto, para medir el enriquecimiento en
+casos patológicos, magnitud conocida como lift y definida como el cociente entre
+la probabilidad de que una observación sea patológica dado que el detector la ha
+marcado y la probabilidad de que lo sea sin más información. Un lift de 1
+significa que el detector no aporta nada frente al azar.
 
 ## 5.2 Métodos univariantes de referencia
 """)
@@ -250,23 +236,20 @@ RES["n_iqr"] = int(anom_iqr.sum())
 ''')
 
     md(r"""
-Las reglas univariantes fracasan por completo en este conjunto. El Z-score marca
-343 filas, el 16,1 % del total, más de tres veces la contaminación que cabría
-considerar razonable. La regla de Tukey marca 1 220 filas, es decir, el 57,4 %
-del conjunto; un detector de anomalías que declara anómala a más de la mitad de
-la población sencillamente no detecta nada.
+Las reglas univariantes fracasan. El Z-score marca 343 filas, el 16,1 % del
+total, más de tres veces la contaminación razonable. La regla de Tukey marca
+1 220 filas, el 57,4 %: un detector que declara anómala a más de la mitad de la
+población no detecta nada.
 
-La causa es doble. Por un lado está el problema de las comparaciones múltiples:
-aun suponiendo normalidad e independencia, examinar 20 variables con un umbral
-de 3 desviaciones típicas eleva la probabilidad acumulada de falso positivo
-hasta el 5,3 % por fila. Por otro, y más importante, las variables no son
-normales, ya que el análisis exploratorio mostró asimetrías extremas y conteos
-con exceso de ceros; en esa situación el rango intercuartílico se vuelve
-minúsculo y casi cualquier valor no nulo queda fuera de los bigotes.
+La causa es doble. Por un lado, las comparaciones múltiples: aun suponiendo
+normalidad e independencia, examinar 20 variables con umbral de 3 desviaciones
+típicas eleva la probabilidad acumulada de falso positivo al 5,3 % por fila. Por
+otro, y más importante, las variables no son normales, y con asimetrías extremas
+y exceso de ceros el rango intercuartílico se vuelve minúsculo, de modo que casi
+cualquier valor no nulo cae fuera de los bigotes.
 
-La lección es clara: la anormalidad de un trazado no reside en ninguna variable
-aislada, sino en la combinación de sus valores, y para capturarla hacen falta
-métodos multivariantes.
+La anormalidad de un trazado no reside en ninguna variable aislada sino en la
+combinación de sus valores, y capturarla exige métodos multivariantes.
 
 ## 5.3 Distancia de Mahalanobis robusta
 """)
@@ -332,28 +315,25 @@ RES["n_mahalanobis_chi2"] = int(marcados_chi2.sum())
 ''')
 
     md(r"""
-El gráfico cuantil-cuantil se separa muy pronto de la diagonal, porque las
-distancias observadas crecen mucho más rápido que las que predice la
-chi-cuadrado. El supuesto de normalidad multivariante no se cumple, y esa es la
-razón de que el umbral teórico marque 646 observaciones, el 30,4 % del conjunto,
-una cifra sin ningún sentido operativo, ya que ningún servicio de obstetricia
-revisaría a mano tres de cada diez registros. Se conserva, por tanto, el umbral
-empírico del 5 %, que además permite comparar este método con Isolation Forest y
-con LOF en igualdad de condiciones.
+El gráfico cuantil-cuantil se separa pronto de la diagonal: las distancias
+observadas crecen mucho más rápido que las que predice la chi-cuadrado. El
+supuesto de normalidad multivariante no se cumple, y por eso el umbral teórico
+marca 646 observaciones, el 30,4 % del conjunto, cifra sin sentido operativo
+porque ningún servicio revisaría a mano tres de cada diez registros. Se conserva
+el umbral empírico del 5 %, que además permite comparar el método con Isolation
+Forest y con LOF en igualdad de condiciones.
 
 ## 5.4 Isolation Forest
 
-El método fue propuesto por Liu, Ting y Zhou (2008) y parte de una observación
-sencilla. Si se particiona el espacio eligiendo al azar una variable y un punto
-de corte, un punto anómalo queda aislado en muy pocos cortes, mientras que uno
-situado en el núcleo denso de la nube necesita muchos. El algoritmo construye un
-bosque de árboles de partición aleatoria y asigna a cada observación una
-puntuación basada en su profundidad media de aislamiento.
+Propuesto por Liu, Ting y Zhou (2008), parte de una observación sencilla: si se
+particiona el espacio eligiendo al azar una variable y un punto de corte, un
+punto anómalo queda aislado en muy pocos cortes mientras que uno del núcleo denso
+necesita muchos. El algoritmo construye un bosque de árboles aleatorios y asigna
+a cada observación una puntuación según su profundidad media de aislamiento.
 
-A diferencia de casi todos los demás métodos, no modela la normalidad para
-buscar después desviaciones, sino que modela directamente la rareza. No asume
-ninguna distribución, tolera bien la alta dimensionalidad y su coste computacional
-es lineal en el número de observaciones.
+A diferencia de casi todos los demás, no modela la normalidad para buscar
+desviaciones sino que modela directamente la rareza. No asume distribución
+alguna, tolera la alta dimensionalidad y su coste es lineal.
 """)
 
     code(r'''
@@ -407,41 +387,36 @@ RES["perfil_iforest"] = perfil.head(8)["Diferencia"].to_dict()
 ''')
 
     md(r"""
-El perfil de las observaciones marcadas resulta clínicamente coherente y sirve
-como validación cualitativa del método. La tabla anterior recoge las ocho
-variables que más separan a las anomalías del resto del conjunto. Se sitúan muy
-por encima de la media general en `Variance`, con 2,33 desviaciones típicas de
-diferencia, en `DP`, que recoge las deceleraciones prolongadas, con 2,22, en
-`MSTV`, indicador de variabilidad errática a corto plazo, con 1,68, y también en
-`Max`, `Nmax` y `DL`. Al mismo tiempo se sitúan muy por debajo en `Mean`, con
-1,48 desviaciones típicas menos, y en `Mode`, con 1,39 menos; el mismo
-desplazamiento a la baja aparece, algo más atenuado, en `Median` y en `Min`.
+El perfil de las observaciones marcadas es clínicamente coherente y sirve de
+validación cualitativa. Las ocho variables que más las separan del resto las
+sitúan muy por encima de la media en `Variance`, con 2,33 desviaciones típicas de
+diferencia, en `DP`, las deceleraciones prolongadas, con 2,22, en `MSTV`,
+variabilidad errática a corto plazo, con 1,68, y también en `Max`, `Nmax` y `DL`;
+y muy por debajo en `Mean`, con 1,48 menos, y en `Mode`, con 1,39, con el mismo
+desplazamiento atenuado en `Median` y `Min`.
 
-Traducido al lenguaje clínico, el algoritmo ha aislado trazados con bradicardia,
-puesto que toda la tendencia central del histograma aparece desplazada a la
-baja, acompañada de deceleraciones prolongadas y severas y de una variabilidad
-amplia y errática. Es la descripción de manual de un trazado no tranquilizador,
-y lo notable es que la haya reconstruido sin haber visto un solo diagnóstico.
+En lenguaje clínico, el algoritmo ha aislado trazados con bradicardia, ya que
+toda la tendencia central aparece desplazada a la baja, acompañada de
+deceleraciones prolongadas y severas y de variabilidad amplia y errática. Es la
+descripción de manual de un trazado no tranquilizador, reconstruida sin haber
+visto un solo diagnóstico.
 
-Merece la pena señalar un matiz. La variable `ALTV` aparece por debajo de la
-media en las anomalías, con 0,54 desviaciones típicas menos. Isolation Forest no
-está capturando el fenotipo del trazado plano, caracterizado por una
-variabilidad reducida y monótona, sino el fenotipo errático y decelerativo. Son
+Un matiz: `ALTV` aparece por debajo de la media en las anomalías, con 0,54
+desviaciones típicas menos. Isolation Forest no captura el fenotipo del trazado
+plano, de variabilidad reducida y monótona, sino el errático y decelerativo. Son
 dos formas distintas de compromiso fetal y el detector se especializa en la
 segunda.
 
 ## 5.5 Factor local de atipicidad
 
-El método fue propuesto por Breunig y sus colaboradores en el año 2000 y no
-busca puntos lejanos del centro, sino puntos situados en zonas menos densas que
-su propio vecindario. Para cada observación compara su densidad local con la
-densidad local media de sus k vecinos más próximos, de modo que un cociente muy
-superior a 1 indica que el punto está más solo que quienes lo rodean.
+Propuesto por Breunig y sus colaboradores en 2000, no busca puntos lejanos del
+centro sino situados en zonas menos densas que su propio vecindario: compara la
+densidad local de cada observación con la media de sus k vecinos, y un cociente
+muy superior a 1 indica que el punto está más solo que quienes lo rodean.
 
-Su ventaja teórica es la capacidad de detectar anomalías locales, es decir,
-puntos que resultan anómalos respecto de su grupo aunque no sean extremos en el
-conjunto global. Su debilidad es que depende críticamente del valor de k y que
-la noción de densidad se degrada en dimensión alta.
+Su ventaja es detectar anomalías locales, anómalas respecto de su grupo aunque no
+sean extremas en el conjunto global. Su debilidad, la dependencia crítica de k y
+la degradación de la densidad en dimensión alta.
 """)
 
     code(r'''
@@ -596,37 +571,30 @@ RES["jaccard_if_lof"] = float(round(jaccard[nombres.index("Isolation Forest (5 %
     md(r"""
 La evaluación externa ordena los cinco detectores de forma inequívoca. Isolation
 Forest es el mejor con diferencia: de las 107 observaciones que marca, el 54,2 %
-son casos patológicos, frente a una tasa base del 8,3 %, lo que supone un lift
-de 6,55. Recupera además el 33 % de todos los casos patológicos del conjunto
-examinando solamente el 5 % de los registros, de modo que, en términos
-operativos, una revisión manual de ese 5 % encontraría uno de cada dos casos
-graves.
+son patológicas frente a una tasa base del 8,3 %, un lift de 6,55. Recupera el
+33 % de todos los casos patológicos examinando solo el 5 % de los registros, de
+modo que una revisión manual de ese 5 % encontraría uno de cada dos casos graves.
 
-La distancia de Mahalanobis robusta queda en segundo lugar, con un lift de 5,01,
-resultado notable si se tiene en cuenta que su supuesto de normalidad está
-claramente violado; el estimador robusto compensa buena parte del problema. El
-Z-score alcanza un lift alto, de 4,90, pero a un coste inaceptable, ya que marca
-el 16 % del conjunto, y su recall del 79 % resulta engañoso porque se consigue
-señalando una de cada seis observaciones.
+La distancia de Mahalanobis robusta queda segunda con un lift de 5,01, resultado
+notable dado que su supuesto de normalidad está violado; el estimador robusto
+compensa buena parte del problema. El Z-score alcanza 4,90 pero a un coste
+inaceptable, marcando el 16 % del conjunto, y su recall del 79 % es engañoso
+porque se logra señalando una de cada seis observaciones.
 
-El factor local de atipicidad es el peor de los métodos multivariantes, con un
-lift de 2,14. El motivo es estructural: LOF busca anomalías locales y en un
-espacio de veinte dimensiones la noción de densidad local se diluye. A ello se
-suma que los trazados patológicos de este conjunto no forman puntos aislados
-sino una región periférica relativamente poblada, que LOF interpreta como un
-vecindario legítimo. La regla de Tukey, por último, no sirve en absoluto: su
-lift es de 1,65 marcando el 57 % del conjunto.
+El factor local de atipicidad es el peor de los multivariantes, con 2,14, por un
+motivo estructural: busca anomalías locales y en veinte dimensiones la densidad
+local se diluye, y además los trazados patológicos no forman puntos aislados sino
+una región periférica poblada que LOF interpreta como vecindario legítimo. La
+regla de Tukey no sirve en absoluto: lift de 1,65 marcando el 57 % del conjunto.
 
-Hay un hallazgo transversal que conviene subrayar. Los índices de Jaccard son
-bajos en toda la matriz, y en particular Isolation Forest y LOF comparten apenas
-el 20 % de sus detecciones. Dicho de otro modo, ser una anomalía no es una
-propiedad absoluta del dato sino una propiedad relativa al método, y por eso la
-elección del detector no puede hacerse sin un criterio externo de utilidad como
-el que aquí aporta la etiqueta `NSP`.
+Un hallazgo transversal: los índices de Jaccard son bajos en toda la matriz, y en
+particular Isolation Forest y LOF comparten apenas el 20 % de sus detecciones.
+Ser una anomalía no es una propiedad absoluta del dato sino relativa al método, y
+por eso elegir detector exige un criterio externo de utilidad como el que aporta
+`NSP`.
 
-Se adopta en consecuencia Isolation Forest al 5 % como detector de referencia.
-Sus 107 anomalías no se eliminan del conjunto, porque en un problema clínico los
-valores atípicos son la señal de interés y no ruido que convenga limpiar. Se
-conservan marcadas, y en la sección siguiente se comprueba que el agrupamiento
-las ubica efectivamente en un grupo propio.
+Se adopta Isolation Forest al 5 % como detector de referencia. Sus 107 anomalías
+no se eliminan, porque en un problema clínico los atípicos son la señal de interés
+y no ruido; se conservan marcadas y en la sección siguiente se comprueba que el
+agrupamiento las ubica en un grupo propio.
 """)

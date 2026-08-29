@@ -9,9 +9,7 @@ ejecucion real: ninguna cifra se transcribe a mano y el documento no puede
 desincronizarse del analisis.
 
 Formato exigido por la actividad: tipo de letra Calibri, tamano 12, interlineado
-1,5, maximo 40 paginas, en PDF. NOTA: reproducir las 32 celdas como captura de
-Colab lleva el informe a 47 paginas; una captura ocupa mas del doble que el
-mismo codigo compuesto como texto. Es una decision expresa del autor.
+1,5, maximo 40 paginas, en PDF.
 
 Uso:
     python build_report.py
@@ -39,11 +37,22 @@ SALIDA = "Actividad_ML_CTG_Meneses.pdf"
 REPO_URL = "https://github.com/amenesesy/actividad-ml-ctg"
 DIR_FIGURAS = pathlib.Path("figuras")
 
-# Capturas del cuaderno abierto en Google Colab. Las TREINTA Y DOS celdas de
-# codigo se reproducen asi, con el resaltado de sintaxis y el area de salida tal
-# como los presenta el entorno.
+# Capturas del cuaderno abierto en Google Colab. Se reproducen asi las celdas
+# elementales, es decir, las que ejecutan un analisis y devuelven un resultado
+# que el informe comenta. Las celdas auxiliares, que solo importan librerias,
+# documentan el diccionario de variables o dibujan una figura que ya aparece
+# aparte en formato APA, van compuestas como texto: reproducirlas tambien como
+# captura llevaria el informe muy por encima de las 40 paginas del enunciado.
 DIR_CAPTURAS = pathlib.Path("capturas")
 ANCHO_CAPTURA = 15.0 * cm
+CELDAS_AUXILIARES = {
+    "0.2",   # importacion de librerias
+    "1.2",   # diccionario de variables
+    # Las celdas que dibujan una figura tambien van como texto: su grafico ya
+    # aparece aparte en formato APA y la captura lo duplicaria.
+    "2.4", "2.5", "3.4", "4.2", "5.2", "5.6",
+    "6.2", "6.3", "6.4", "6.6", "6.8", "6.9", "6.10",
+}
 
 TAM_CUERPO = 12                      # exigido: Calibri 12
 INTERLINEADO = round(TAM_CUERPO * 1.5)   # exigido: interlineado 1,5
@@ -739,13 +748,13 @@ def indice(estilos):
         "Python comentado, a continuación la salida que produce y, por último, la "
         "interpretación de los resultados obtenidos.", estilos["cuerpo"]))
     elementos.append(Paragraph(
-        "Las treinta y dos celdas de código se reproducen como captura del cuaderno "
-        "abierto en Google Colab, con el resaltado de sintaxis y el área de salida "
-        "tal como los presenta el entorno. Las figuras que genera cada celda "
-        "aparecen además por separado en formato APA, con su número, su título y "
-        "su nota, porque dentro de la captura salen a un tamaño que no permite "
-        "leerlas. El cuaderno completo, con las figuras a resolución original, está "
-        "disponible en el "
+        "Las celdas que ejecutan un análisis y devuelven un resultado numérico se "
+        "reproducen como captura del cuaderno abierto en Google Colab, con el "
+        "resaltado de sintaxis y el área de salida tal como los presenta el entorno. "
+        "Las que dibujan una figura van compuestas como texto, porque su gráfico "
+        "aparece a continuación en formato APA, con su número, su título y su nota, "
+        "y la captura solo lo duplicaría a un tamaño ilegible. El cuaderno completo "
+        "está disponible en el "
         'repositorio público <link href="%s" color="#0098CD">%s</link>.'
         % (REPO_URL, REPO_URL), estilos["cuerpo"]))
     return elementos
@@ -791,7 +800,8 @@ def main():
         # apareciendo despues en formato APA, con su numero, su titulo y su nota,
         # porque el texto las cita por ese numero y dentro de la captura salen a
         # un tamano que no permite leerlas.
-        captura = DIR_CAPTURAS / ("colab_%s.png" % clave) if clave else None
+        captura = (DIR_CAPTURAS / ("colab_%s.png" % clave)
+                   if clave and clave not in CELDAS_AUXILIARES else None)
         if captura is not None and captura.exists():
             # El rotulo y la captura viajan juntos: separarlos dejaria el titulo
             # del listado colgando al pie de una pagina y la imagen en la

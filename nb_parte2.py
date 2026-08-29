@@ -9,15 +9,13 @@ def construir():
     md(r"""
 # 2. Análisis descriptivo de los datos
 
-El análisis exploratorio persigue tres objetivos concretos antes de aplicar
-ningún algoritmo. El primero es conocer la escala y la forma de cada variable,
-porque tanto la detección de anomalías como el agrupamiento se basan en
-distancias y son, por tanto, muy sensibles a las unidades de medida y a la
-asimetría. El segundo es detectar los problemas de calidad, es decir, filas
-espurias, columnas constantes, duplicados y redundancias que contaminarían los
-modelos si pasaran inadvertidos. El tercero es cuantificar la redundancia entre
-variables mediante la matriz de correlaciones, dato que resultará decisivo para
-saber si conviene reducir la dimensionalidad.
+El análisis exploratorio persigue tres objetivos antes de aplicar ningún
+algoritmo: conocer la escala y la forma de cada variable, porque la detección de
+anomalías y el agrupamiento se basan en distancias y son sensibles a las unidades
+y a la asimetría; detectar los problemas de calidad, es decir, filas espurias,
+columnas constantes, duplicados y redundancias que contaminarían los modelos; y
+cuantificar la redundancia mediante la matriz de correlaciones, dato decisivo
+para saber si conviene reducir la dimensionalidad.
 
 ## 2.1 Estructura del conjunto
 """)
@@ -45,14 +43,12 @@ print(df_bruto.iloc[-4:, 8:18].to_string())
 ''')
 
     md(r"""
-La inspección de las últimas filas revela el primer hallazgo importante del
-trabajo, y es que el archivo no termina en un registro clínico. Las tres últimas
-líneas son residuos de la hoja de cálculo original `CTG.xls`: una fila
-completamente vacía, una fila con ceros de relleno y una tercera que repite el
-valor máximo de cada columna. No son pacientes, sino las filas de resumen que
-la hoja de cálculo dejó al pie. El detalle condiciona por completo la sección 3, porque son
-exactamente esas tres filas las que generan todos los valores faltantes del
-conjunto.
+La inspección de las últimas filas revela el primer hallazgo del trabajo: el
+archivo no termina en un registro clínico. Las tres últimas líneas son residuos
+de la hoja de cálculo original `CTG.xls`, una vacía, otra con ceros y una tercera
+que repite el valor máximo de cada columna. No son pacientes, sino las filas de
+resumen que la hoja dejó al pie, y son exactamente las que generan todos los
+valores faltantes del conjunto.
 
 ## 2.2 Estadísticos descriptivos de las variables numéricas
 """)
@@ -95,24 +91,22 @@ RES["top_asimetria"] = desc["asimetria"].abs().sort_values(ascending=False).head
 ''')
 
     md(r"""
-La tabla admite tres lecturas relevantes. La primera es que la columna `count`
-no es constante: la mayoría de variables tiene 2 126 observaciones válidas, pero
-unas pocas tienen 2 127 o 2 128, y esa irregularidad es la huella de las filas
-de artefacto detectadas en el apartado anterior.
+La tabla admite tres lecturas. La columna `count` no es constante: la mayoría de
+variables tiene 2 126 observaciones válidas y unas pocas 2 127 o 2 128, huella de
+las filas de resumen detectadas antes.
 
-La segunda es que las escalas son radicalmente distintas. La línea de base `LB`
-se mueve en torno a 133 latidos por minuto, `MSTV` en torno a 1,3 y `Variance`
-alcanza valores de 269. Cualquier algoritmo basado en la distancia euclídea
-quedaría dominado por las variables de rango grande, de modo que la
-estandarización no es opcional sino imprescindible, cuestión que se retoma en la
-sección 4.
+Las escalas son radicalmente distintas: `LB` se mueve en torno a 133 latidos por
+minuto, `MSTV` en torno a 1,3 y `Variance` alcanza 269. Cualquier algoritmo
+basado en la distancia euclídea quedaría dominado por las variables de rango
+grande, de modo que la estandarización es imprescindible, cuestión que se retoma
+en la sección 4.
 
-La tercera lectura tiene que ver con la forma de las distribuciones. Variables
-como `DS`, `DP`, `Variance` o `Nzeros` presentan asimetrías muy superiores a 1 y
-curtosis elevadas, porque son conteos de eventos raros con una enorme
-acumulación de ceros. Esto anticipa que los métodos de detección de anomalías
-que asumen normalidad, como el Z-score o la distancia de Mahalanobis, marcarán
-muchos falsos positivos, y favorece de entrada a los métodos no paramétricos.
+La tercera lectura es la forma de las distribuciones. Variables como `DS`, `DP`,
+`Variance` o `Nzeros` presentan asimetrías muy superiores a 1 y curtosis
+elevadas, porque son conteos de eventos raros con enorme acumulación de ceros.
+Esto anticipa que los métodos que asumen normalidad, como el Z-score o la
+distancia de Mahalanobis, marcarán muchos falsos positivos, y favorece a los no
+paramétricos.
 
 ## 2.3 Variables categóricas y frecuencias
 """)
@@ -160,19 +154,17 @@ RES["frec_nsp"] = df_bruto["NSP"].value_counts(dropna=False).sort_index().to_dic
 ''')
 
     md(r"""
-El análisis de las categóricas produce cuatro decisiones de modelado. Las
-variables `FileName`, `Date` y `SegFile` tienen una cardinalidad casi igual al
-número de filas, lo que las identifica como identificadores del registro; no
-describen al feto y por tanto se descartan. La variable `NSP` está muy
-desbalanceada, con un 77,8 % de casos normales, un 13,9 % de sospechosos y un
-8,3 % de patológicos, y ese desbalance es justamente lo que convierte al
-conjunto en un buen banco de pruebas para la detección de anomalías. La variable
-`CLASS` reparte los datos en diez categorías con frecuencias muy dispares, entre
-53 y 579 casos. Por último, las diez indicadoras que van de `A` a `SUSP` suman
-exactamente 1 en todas las filas, lo que demuestra que son una codificación
-disyuntiva de `CLASS`. Mantenerlas junto a `CLASS` supondría duplicar
-información y, lo que es peor, haría singular la matriz de covarianzas e
-impediría calcular la distancia de Mahalanobis, así que también se eliminan.
+El análisis de las categóricas produce cuatro decisiones. `FileName`, `Date` y
+`SegFile` tienen una cardinalidad casi igual al número de filas, lo que las
+identifica como identificadores del registro y las descarta. `NSP` está muy
+desbalanceada, con un 77,8 % de normales, un 13,9 % de sospechosos y un 8,3 % de
+patológicos, y ese desbalance es lo que convierte al conjunto en un buen banco de
+pruebas para la detección de anomalías. `CLASS` reparte los datos en diez
+categorías con frecuencias de 53 a 579 casos. Y las diez indicadoras de `A` a
+`SUSP` suman exactamente 1 en todas las filas, prueba de que son una codificación
+disyuntiva de `CLASS`: mantenerlas duplicaría información y, peor aún, haría
+singular la matriz de covarianzas, impidiendo calcular la distancia de
+Mahalanobis.
 
 ## 2.4 Matriz de correlaciones
 """)
@@ -226,29 +218,24 @@ print("\nCorrelacion absoluta media entre pares: %.3f" % RES["corr_media_abs"])
 ''')
 
     md(r"""
-La matriz revela una estructura de redundancia muy clara y, además,
-clínicamente interpretable. Existe un primer bloque formado por `Mean`,
-`Median`, `Mode` y `LB`, con correlaciones que van de 0,71 a 0,95, siendo el par
-`Mean` y `Median` el más redundante de todo el conjunto. Las cuatro variables
-miden lo mismo, esto es, dónde se sitúa la frecuencia cardiaca fetal, y solo se
-diferencian en el estimador que emplean.
+La matriz revela una redundancia clara y clínicamente interpretable. Un primer
+bloque reúne `Mean`, `Median`, `Mode` y `LB`, con correlaciones de 0,71 a 0,95,
+siendo `Mean` y `Median` el par más redundante: las cuatro miden dónde se sitúa
+la frecuencia cardiaca y solo cambian de estimador.
 
-Un segundo bloque agrupa a los descriptores de dispersión del histograma. La
-amplitud `Width` correlaciona a −0,90 con `Min`, a 0,75 con `Nmax` y a 0,69 con
-`Max`. La relación resulta ser, de hecho, exacta, puesto que `Width` es igual a
-`Max` menos `Min`, como se comprobará en la sección 4; la correlación lineal por
-pares no llega a revelarla porque la dependencia involucra a tres variables a la
-vez.
+Un segundo bloque agrupa los descriptores de dispersión del histograma. `Width`
+correlaciona a −0,90 con `Min`, a 0,75 con `Nmax` y a 0,69 con `Max`. La relación
+resulta de hecho exacta, porque `Width` es igual a `Max` menos `Min`, como se
+comprobará en la sección 4; la correlación por pares no llega a revelarla porque
+la dependencia involucra a tres variables.
 
-También aparecen correlaciones negativas informativas. La variable `ASTV`
-correlaciona a −0,43 con `MSTV`, y `Variance` a −0,55 con `Min`, lo que expresa
-que cuanto mayor es el porcentaje de tiempo con variabilidad anormal, menor es
-la variabilidad media efectiva del trazado. En conjunto, la redundancia es
-moderada, con una correlación absoluta media de 0,234, y está concentrada en
-esos dos bloques. La consecuencia práctica es que una parte apreciable de la
-varianza total se concentra en pocas direcciones, lo que justifica recurrir al
-análisis de componentes principales tanto para visualizar como para mitigar la
-maldición de la dimensionalidad que sufre DBSCAN.
+También hay correlaciones negativas informativas: `ASTV` con `MSTV` a −0,43 y
+`Variance` con `Min` a −0,55, lo que expresa que cuanto mayor es el tiempo con
+variabilidad anormal, menor es la variabilidad media efectiva. La redundancia
+global es moderada, con una correlación absoluta media de 0,234 concentrada en
+esos dos bloques, de modo que una parte apreciable de la varianza vive en pocas
+direcciones. Eso justifica recurrir al análisis de componentes principales para
+visualizar y para mitigar la maldición de la dimensionalidad que sufre DBSCAN.
 
 ## 2.5 Distribuciones de las variables clave
 """)
@@ -308,17 +295,17 @@ RES["atipicos_univariantes"] = atipicos_por_var.head(8).to_dict()
 ''')
 
     md(r"""
-Los histogramas de la figura 2 confirman lo que ya anticipaban la asimetría y la
-curtosis. Solo `LB`, `Mean`, `Mode` y `Median` son aproximadamente simétricas; el
-resto son distribuciones fuertemente sesgadas a la derecha, con una masa enorme
-de ceros en los conteos de eventos como `DS`, `DP` o `Nzeros`.
+Los histogramas de la figura 2 confirman lo que anticipaban la asimetría y la
+curtosis: solo `LB`, `Mean`, `Mode` y `Median` son aproximadamente simétricas y
+el resto están fuertemente sesgadas a la derecha, con una masa enorme de ceros en
+los conteos como `DS`, `DP` o `Nzeros`.
 
-Los diagramas de caja de la figura 3 muestran que prácticamente todas las
-variables tienen puntos fuera de los bigotes, lo que constituye una advertencia metodológica de
-primer orden. Si se aplicara una regla univariante y se eliminara toda fila con
-algún valor atípico, se perdería una fracción enorme del conjunto y, además,
-serían precisamente los casos clínicamente más interesantes los que
-desaparecerían. La detección de anomalías tiene que ser multivariante.
+Los diagramas de caja de la figura 3 muestran que casi todas las variables tienen
+puntos fuera de los bigotes, advertencia metodológica de primer orden: aplicar
+una regla univariante y eliminar toda fila con algún atípico perdería una
+fracción enorme del conjunto, y serían justo los casos clínicamente más
+interesantes los que desaparecerían. La detección de anomalías tiene que ser
+multivariante.
 
 # 3. Tratamiento de los valores faltantes
 
@@ -376,35 +363,29 @@ observaciones.
 ## 3.2 Decisión: eliminar frente a imputar
 
 En términos de la tipología de Rubin (1976), este no es un caso de datos
-faltantes completamente al azar, ni al azar, ni no al azar. No hay ningún dato
-que falte; lo que hay son filas que no son observaciones. La discusión sobre si
-conviene la media, la mediana o la moda solo es pertinente cuando la fila
-representa a un individuo real del que se desconoce alguna medida, y no es este
-el caso.
+faltantes completamente al azar, ni al azar, ni no al azar: no falta ningún dato,
+sino que hay filas que no son observaciones. La discusión sobre la media, la
+mediana o la moda solo es pertinente cuando la fila representa a un individuo
+real del que se desconoce alguna medida.
 
-La decisión adoptada es, por tanto, eliminar las tres filas. La justifican
-varios argumentos convergentes. El primero atañe a la naturaleza del dato:
-eliminar es correcto porque no se está descartando información clínica, mientras
-que imputar fabricaría tres pacientes ficticios. El segundo es el coste, que
-resulta despreciable, ya que se pierden 3 filas de 2 129, apenas el 0,14 % del
-conjunto. El tercero, y el más importante para este trabajo, es el efecto sobre
-los modelos: la fila de máximos, de conservarse imputada, sería un registro
-sintético que alcanza a la vez el valor extremo de diez variables distintas,
-combinación que no se da en ningún trazado real y que la convertiría en el
-atípico multivariante más señalado del conjunto, además de desplazar los
-centroides de K-Means, que no son robustos frente a valores extremos. A ello se
-añade un argumento de
-trazabilidad, porque la imputación enmascararía un error de origen que conviene
-dejar documentado.
+La decisión es eliminar las tres filas, y la justifican varios argumentos
+convergentes. Por naturaleza del dato, eliminar no descarta información clínica
+mientras que imputar fabricaría tres pacientes ficticios. Por coste, se pierden 3
+filas de 2 129, apenas el 0,14 %. Y sobre todo por su efecto en los modelos: la
+fila de máximos, imputada, sería un registro sintético que alcanza a la vez el
+valor extremo de diez variables distintas, combinación que no se da en ningún
+trazado real, lo que la convertiría en el atípico multivariante más señalado del
+conjunto y desplazaría los centroides de K-Means, que no son robustos. Se añade
+un argumento de trazabilidad: imputar enmascararía un error de origen que
+conviene dejar documentado.
 
-Imputar con la media sería, por añadidura, internamente incoherente, ya que se
-estaría usando la media de una columna que la propia fila de resumen ha
-contaminado para completar esa misma fila.
+Imputar con la media sería además internamente incoherente, porque se usaría la
+media de una columna que la propia fila de resumen ha contaminado para completar
+esa misma fila.
 
-De todo ello se deriva una regla general que vale la pena retener: antes de
-elegir una estrategia de imputación hay que preguntarse si la fila representa a
-una entidad real, y solo cuando la respuesta es afirmativa tiene sentido
-comparar la media, la mediana, la moda o el vecino más cercano.
+De ahí una regla general: antes de elegir una estrategia de imputación hay que
+preguntarse si la fila representa a una entidad real, y solo entonces tiene
+sentido comparar la media, la mediana, la moda o el vecino más cercano.
 """)
 
     code(r'''
@@ -455,17 +436,13 @@ RES["n_filas_eliminadas"] = int(n_antes - len(df))
     md(r"""
 ## 3.3 Experimento de validación
 
-La decisión anterior se apoya en el significado de los datos. Para respaldarla
-también de forma cuantitativa, y para responder de manera completa a la pregunta
-que plantea el enunciado sobre la media, la mediana y la moda, se diseña un
-experimento controlado en cuatro pasos. Se parte del conjunto ya depurado, que
-está completo; se borra artificialmente el 10 % de los valores numéricos de
-forma completamente aleatoria, lo que reproduce un mecanismo de pérdida
-completamente al azar; se reconstruye la matriz con cuatro estrategias distintas,
-media, mediana, moda y vecinos más cercanos con k igual a 5; y por último se
-mide el error frente al valor verdadero, que en este montaje sí se conoce. Este
-diseño permite comparar estrategias contra una verdad de referencia, algo
-imposible cuando los faltantes son reales.
+Para respaldar la decisión de forma cuantitativa, y para responder por completo a
+la pregunta del enunciado sobre la media, la mediana y la moda, se diseña un
+experimento controlado: se parte del conjunto ya depurado, se borra el 10 % de
+los valores de forma completamente aleatoria, se reconstruye con media, mediana,
+moda y vecinos más cercanos con k igual a 5, y se mide el error frente al valor
+verdadero, que aquí sí se conoce. Así se comparan las estrategias contra una
+verdad de referencia, algo imposible cuando los faltantes son reales.
 """)
 
     code(r'''
@@ -589,37 +566,32 @@ guardar("fig_imputacion")
 
     md(r"""
 El experimento cuantifica lo que la teoría anticipaba. La imputación por vecinos
-más cercanos gana en las tres métricas a la vez: su RMSE normalizado es de
-0,224, frente a 0,382 de la media, 0,399 de la mediana y 0,481 de la moda, de
-modo que reduce el error de reconstrucción casi a la mitad. La razón es que
-estima cada hueco a partir de las cinco observaciones más parecidas y aprovecha
-así la correlación entre variables documentada en el apartado 2.4, estructura
-que los tres imputadores por constante ignoran por completo.
+más cercanos gana en las tres métricas: su RMSE normalizado es de 0,224 frente a
+0,382 de la media, 0,399 de la mediana y 0,481 de la moda, casi la mitad de
+error. La razón es que estima cada hueco a partir de las cinco observaciones más
+parecidas y aprovecha la correlación documentada en el apartado 2.4, estructura
+que los imputadores por constante ignoran.
 
-Todas las estrategias comprimen la dispersión, puesto que el ratio de
-desviaciones típicas cae por debajo de 1 en los cuatro casos. Sustituir el 10 %
-de los valores por un único número central reduce de forma mecánica la varianza.
-La media es la que más la degrada, con un ratio de 0,949, y el método de vecinos
-la que menos, con 0,983. Este último es además el único que preserva la
-estructura de correlaciones, algo decisivo para el análisis de componentes
-principales posterior: su error medio en la matriz de correlaciones es de 0,006,
-cuatro veces menor que el de la media, que llega a 0,027, y seis veces menor que
-el de la moda, que alcanza 0,038.
+Todas comprimen la dispersión, con el ratio de desviaciones típicas por debajo de
+1: sustituir el 10 % de los valores por un número central reduce la varianza de
+forma mecánica. La media es la que más la degrada, con 0,949, y el método de
+vecinos la que menos, con 0,983. Este último es además el único que preserva la
+estructura de correlaciones, decisivo para el análisis de componentes principales
+posterior: su error medio en la matriz es de 0,006, cuatro veces menor que el de
+la media y seis veces menor que el de la moda.
 
-La figura 4 muestra un aspecto que el RMSE no llega a capturar. La media,
-dibujada en cian claro, y la mediana, en rojo, crean un pico artificial justo
-en el valor central de `ASTV` y de `MSTV`, una moda que no existe en la
-distribución real. La moda, en gris, deforma por completo el pico de `LB` y de
-`MSTV`, porque concentra masa en el valor más frecuente. La curva del método de
-vecinos, en cian oscuro, se superpone casi exactamente al área sombreada que
-representa la distribución original.
+La figura 4 muestra un aspecto que el RMSE no captura. La media, en cian claro, y
+la mediana, en rojo, crean un pico artificial en el valor central de `ASTV` y de
+`MSTV` que no existe en la distribución real. La moda, en gris, deforma el pico
+de `LB` y de `MSTV` al concentrar masa en el valor más frecuente. La curva de
+vecinos, en cian oscuro, se superpone casi exactamente al área sombreada de la
+distribución original.
 
-En conclusión, si en este conjunto hubiera habido faltantes reales y dispersos,
-la elección correcta habría sido la imputación por vecinos más cercanos, y por
-un margen amplio. Entre las estrategias simples, la media y la mediana quedan
-muy igualadas, ya que la primera reconstruye algo mejor y la segunda conserva
-algo mejor la dispersión, mientras que la moda debe descartarse para variables
-continuas. Pero como los faltantes de este conjunto proceden de tres filas que
-no son observaciones, la decisión que finalmente se aplica es eliminarlas, y el
-conjunto de trabajo queda con 2 126 registros completos.
+Si en este conjunto hubiera habido faltantes reales y dispersos, la elección
+correcta habría sido la imputación por vecinos más cercanos, y por un margen
+amplio. La media y la mediana quedan muy igualadas, porque la primera reconstruye
+algo mejor y la segunda conserva algo mejor la dispersión, mientras que la moda
+debe descartarse para variables continuas. Pero como los faltantes proceden de
+tres filas que no son observaciones, se aplica la eliminación y el conjunto de
+trabajo queda con 2 126 registros completos.
 """)

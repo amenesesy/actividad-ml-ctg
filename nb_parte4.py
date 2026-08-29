@@ -11,29 +11,25 @@ def construir():
 
 ## 6.1 Planteamiento
 
-El agrupamiento busca particionar las observaciones en grupos internamente
-homogéneos y mutuamente diferenciados, sin recurrir a ninguna etiqueta. Se
-aplican tres algoritmos de familias distintas.
+El agrupamiento particiona las observaciones en grupos internamente homogéneos y
+mutuamente diferenciados sin recurrir a ninguna etiqueta. Se aplican tres
+algoritmos de familias distintas.
 
-K-Means es un método particional que minimiza la inercia dentro de cada grupo,
-tiende a producir grupos de forma esférica y tamaño parecido y exige fijar de
-antemano el número de grupos. DBSCAN pertenece a la familia de los métodos
-basados en densidad: busca regiones densas separadas por regiones vacías, admite
-grupos de forma arbitraria, no obliga a fijar su número y etiqueta como ruido
-aquello que no encaja en ninguno. El agrupamiento jerárquico aglomerativo con
-criterio de Ward construye una jerarquía de fusiones sucesivas que minimizan el
+K-Means es particional, minimiza la inercia dentro de cada grupo, tiende a grupos
+esféricos de tamaño parecido y exige fijar su número. DBSCAN se basa en densidad:
+busca regiones densas separadas por regiones vacías, admite formas arbitrarias,
+no obliga a fijar el número y etiqueta como ruido lo que no encaja. El jerárquico
+aglomerativo con criterio de Ward construye fusiones sucesivas que minimizan el
 incremento de varianza, produce grupos compactos y anidados y permite decidir el
-número de grupos a posteriori, al cortar el árbol a la altura deseada.
+número a posteriori, cortando el árbol.
 
-Para valorar los resultados se emplean dos tipos de métricas. Las de validación
-interna se calculan solo con los datos, y son el coeficiente de silueta, que se
-mueve entre menos uno y uno y mide la cohesión frente a la separación; el índice
-de Davies-Bouldin, que compara dispersión y separación y conviene que sea bajo;
-y el índice de Calinski-Harabasz, que relaciona la varianza entre grupos con la
-varianza interna y conviene que sea alto. Las de validación externa contrastan
-la partición con la etiqueta `NSP`, que no interviene en el ajuste, y son el
-índice de Rand ajustado y la información mutua normalizada; un índice de Rand
-ajustado igual a cero equivale a una partición completamente aleatoria.
+Se emplean dos tipos de métricas. Las internas se calculan solo con los datos: el
+coeficiente de silueta, entre menos uno y uno, que mide cohesión frente a
+separación; el índice de Davies-Bouldin, que compara dispersión y separación y
+conviene bajo; y el de Calinski-Harabasz, que relaciona la varianza entre grupos
+con la interna y conviene alto. Las externas contrastan la partición con `NSP`,
+que no interviene en el ajuste: el índice de Rand ajustado y la información mutua
+normalizada, donde un cero equivale a una partición aleatoria.
 
 ## 6.2 K-Means: elección del número de grupos
 """)
@@ -125,37 +121,33 @@ guardar("fig_kmeans_seleccion")
 ''')
 
     md(r"""
-Los criterios no coinciden entre sí, y esa discrepancia constituye en sí misma
-el hallazgo más instructivo del apartado. La curva de inercia decrece de forma
-suave, sin codo pronunciado; el criterio analítico lo sitúa en k igual a 5, pero
-la curvatura es débil, lo que indica que no existe una estructura de grupos
-fuertemente separados. El coeficiente de silueta alcanza su máximo en k igual a
-2, con un valor de 0,183, y todos los valores del barrido quedan por debajo de
-0,19, cuando en un conjunto con grupos nítidos se esperarían valores superiores
-a 0,5. El índice de Davies-Bouldin alcanza su mínimo en k igual a 7, con 1,47, y
-el de Calinski-Harabasz decrece de forma monótona, favoreciendo por tanto el
-menor k posible. Los tres criterios internos apuntan, en definitiva, a tres
+Los criterios no coinciden entre sí, y esa discrepancia es el hallazgo más
+instructivo del apartado. La curva de inercia decrece suavemente, sin codo
+pronunciado; el criterio analítico lo sitúa en k igual a 5, pero la curvatura es
+débil, señal de que no hay grupos fuertemente separados. La silueta alcanza su
+máximo en k igual a 2, con 0,183, y todo el barrido queda por debajo de 0,19
+cuando con grupos nítidos se esperaría más de 0,5. Davies-Bouldin alcanza su
+mínimo en k igual a 7, con 1,47, y Calinski-Harabasz decrece de forma monótona,
+favoreciendo el menor k posible. Los tres criterios internos apuntan a tres
 valores distintos: 5, 2 y 2.
 
-La validación externa, en cambio, sí resulta concluyente. El índice de Rand
-ajustado alcanza su máximo inequívoco en k igual a 3, con 0,214, y cae a menos
-de la mitad en k igual a 4, donde vale 0,091. La información mutua normalizada
-es prácticamente máxima también ahí, con 0,222 frente a los 0,226 de k igual a
-6, un valor que requiere el doble de grupos para no ganar nada.
+La validación externa sí es concluyente. El índice de Rand ajustado alcanza su
+máximo inequívoco en k igual a 3, con 0,214, y cae a menos de la mitad en k igual
+a 4, donde vale 0,091. La información mutua normalizada es prácticamente máxima
+ahí también, con 0,222 frente a los 0,226 de k igual a 6, que exige el doble de
+grupos para no ganar nada.
 
-Se adopta en consecuencia k igual a 3, por dos razones independientes que
-apuntan al mismo valor. La razón primaria es de dominio: el problema clínico
-está definido sobre tres estados fetales, normal, sospechoso y patológico, de
-manera que elegir tres grupos responde a la estructura conocida del fenómeno y
-no a los datos, lo que evita cualquier circularidad. La razón secundaria es la
-confirmación externa: que el índice de Rand ajustado alcance su máximo
-precisamente en tres grupos indica que esa estructura de tres niveles existe
-realmente en los descriptores numéricos y no es solo una convención médica.
+Se adopta k igual a 3 por dos razones independientes que apuntan al mismo valor.
+La primaria es de dominio: el problema clínico está definido sobre tres estados
+fetales, de manera que elegir tres grupos responde a la estructura conocida del
+fenómeno y no a los datos, lo que evita la circularidad. La secundaria es la
+confirmación externa: que el índice de Rand alcance su máximo precisamente ahí
+indica que esa estructura de tres niveles existe en los descriptores numéricos y
+no es solo una convención médica.
 
-Conviene señalar de forma explícita que el coeficiente de silueta habría llevado
-a elegir dos grupos, una partición cuyo índice de Rand ajustado resulta ser
-prácticamente nulo, de 0,016. Es un aviso importante: los índices internos miden
-geometría, no significado.
+Conviene señalar que la silueta habría llevado a dos grupos, partición cuyo
+índice de Rand ajustado es prácticamente nulo, de 0,016. Los índices internos
+miden geometría, no significado.
 
 ## 6.3 Perfilado e interpretación de los grupos
 """)
@@ -291,43 +283,36 @@ RES["anomalias_por_grupo"] = cruce_pct["Anomalia IF"].round(1).to_dict()
 El perfilado convierte tres etiquetas numéricas en tres fenotipos clínicos
 reconocibles.
 
-El grupo 0 reúne 204 observaciones, el 9,6 % del conjunto, y corresponde al
-trazado comprometido. Es el grupo pequeño y extremo. Presenta `DP` en 2,21 y
-`DL` en 1,66 desviaciones típicas por encima de la media, lo que se traduce en
-abundantes deceleraciones prolongadas y ligeras; `Variance` en 1,73 y `MSTV` en
-1,28, indicativos de una variabilidad errática; y valores muy bajos de tendencia
-central, con `Mean` en menos 1,86, `Median` en menos 1,56, `Mode` en menos 1,55
-y `Min` en menos 1,10, es decir, bradicardia. Su composición diagnóstica es la
-más severa, con un 51,5 % de casos patológicos frente a la tasa base del 8,3 %.
-Este único grupo, que representa menos de una décima parte del conjunto,
-contiene el 60 % de todos los casos patológicos. Además, el 38 % de sus miembros
-fueron marcados como anomalía por Isolation Forest, cuando en los otros dos
-grupos esa proporción no llega al 2 %.
+El grupo 0, con 204 observaciones y el 9,6 % del conjunto, es el trazado
+comprometido: pequeño y extremo. Presenta `DP` en 2,21 y `DL` en 1,66
+desviaciones típicas por encima de la media, es decir, abundantes deceleraciones
+prolongadas y ligeras; `Variance` en 1,73 y `MSTV` en 1,28, variabilidad
+errática; y tendencia central muy baja, con `Mean` en menos 1,86, `Median` en
+menos 1,56, `Mode` en menos 1,55 y `Min` en menos 1,10, o sea bradicardia. Su
+composición es la más severa, con un 51,5 % de patológicos frente al 8,3 % de
+base: este único grupo, menos de una décima parte del conjunto, contiene el 60 %
+de todos los casos patológicos, y el 38 % de sus miembros fueron marcados por
+Isolation Forest cuando en los otros dos no llega al 2 %.
 
-El grupo 1 reúne 835 observaciones, el 39,3 %, y corresponde a un patrón de
-variabilidad reducida con taquicardia relativa. Muestra `LB` en 0,72 y `Min` en
-0,88, lo que indica una línea de base elevada; `ASTV` en 0,58 y `ALTV` en 0,67,
-que reflejan mucho tiempo con variabilidad anormal; y `MSTV` en menos 0,75, es
-decir, una variabilidad efectiva baja. Su composición es del 61,3 % de casos
-normales pero también de un 31,0 % de sospechosos, casi el triple de la tasa
-base. Es, en definitiva, el grupo intermedio o de vigilancia.
+El grupo 1, con 835 observaciones y el 39,3 %, corresponde a variabilidad
+reducida con taquicardia relativa: `LB` en 0,72 y `Min` en 0,88, línea de base
+elevada; `ASTV` en 0,58 y `ALTV` en 0,67, mucho tiempo con variabilidad anormal;
+y `MSTV` en menos 0,75, variabilidad efectiva baja. Reúne un 61,3 % de normales
+pero también un 31,0 % de sospechosos, casi el triple de la tasa base. Es el
+grupo de vigilancia.
 
-El grupo 2 reúne 1 087 observaciones, el 51,1 %, y corresponde al trazado
-tranquilizador. Presenta `AC` en 0,27 y `MLTV` en 0,29, con aceleraciones
-presentes y buena variabilidad a largo plazo, junto a `ASTV` en menos 0,49 y
-`ALTV` en menos 0,42, esto es, poco tiempo anormal. Su composición es de un
-97,1 % de casos normales, con apenas 7 patológicos.
+El grupo 2, con 1 087 observaciones y el 51,1 %, es el trazado tranquilizador:
+`AC` en 0,27 y `MLTV` en 0,29, con aceleraciones y buena variabilidad a largo
+plazo, junto a `ASTV` en menos 0,49 y `ALTV` en menos 0,42. Un 97,1 % de casos
+normales y apenas 7 patológicos.
 
-El índice de Rand ajustado de 0,214 puede parecer modesto en abstracto, pero la
-prueba chi-cuadrado descarta el azar de forma contundente y la tabla de
-contingencia muestra un gradiente monótono de gravedad entre los grupos. El
-valor moderado tiene además una explicación clara: el agrupamiento separa muy
-bien los extremos, es decir, los grupos 0 y 2, pero no logra aislar la categoría
-de los sospechosos, que es intrínsecamente una zona de transición y no un
-fenotipo con frontera propia. Por otra parte, la convergencia entre las dos
-técnicas, dado que el grupo más anómalo según K-Means es también donde se
-concentran las anomalías de Isolation Forest, refuerza la conclusión de que la
-estructura hallada es real.
+El índice de Rand ajustado de 0,214 puede parecer modesto, pero la prueba
+chi-cuadrado descarta el azar y la contingencia muestra un gradiente monótono de
+gravedad. El valor moderado tiene explicación: el agrupamiento separa muy bien
+los extremos, los grupos 0 y 2, pero no aísla la categoría de los sospechosos,
+que es una zona de transición y no un fenotipo con frontera propia. Que el grupo
+más anómalo según K-Means sea también donde se concentran las anomalías de
+Isolation Forest refuerza que la estructura hallada es real.
 
 ## 6.4 DBSCAN
 """)
@@ -482,36 +467,31 @@ RES["jaccard_ruido_if"] = round(float(jaccard_ruido), 3)
 ''')
 
     md(r"""
-DBSCAN no produce una partición útil del conjunto, y el motivo resulta
-informativo. Con los parámetros elegidos encuentra dos grupos y 213 puntos de
-ruido, pero el reparto es radicalmente asimétrico: un grupo absorbe 1 885
-observaciones, el 88,7 % del conjunto, y el otro apenas 28.
+DBSCAN no produce una partición útil, y el motivo es informativo. Encuentra dos
+grupos y 213 puntos de ruido con un reparto radicalmente asimétrico: un grupo
+absorbe 1 885 observaciones, el 88,7 % del conjunto, y el otro apenas 28.
 
-El barrido de parámetros demuestra que este comportamiento es estructural y no
-consecuencia de una mala elección de eps. En once de las dieciocho combinaciones
-probadas DBSCAN devuelve un único grupo más ruido, y en las siete restantes el
-segundo grupo nunca supera unas pocas decenas de puntos. La razón es que los
-datos no tienen zonas de baja densidad que separen regiones densas, sino que
-forman una nube única cuya densidad decae de manera continua hacia la periferia.
-DBSCAN necesita valles y aquí no los hay.
+El barrido demuestra que es estructural y no una mala elección de eps: en once de
+las dieciocho combinaciones probadas devuelve un único grupo más ruido, y en las
+siete restantes el segundo nunca supera unas decenas de puntos. Los datos no
+tienen zonas de baja densidad que separen regiones densas, sino una nube única
+cuya densidad decae de forma continua hacia la periferia. DBSCAN necesita valles
+y aquí no los hay.
 
-Ahora bien, el grupo 1, formado por 28 observaciones, está compuesto
-íntegramente por casos patológicos. El algoritmo ha aislado un fenotipo extremo
-con una precisión perfecta, si bien cubre solo el 16 % de los patológicos del
-conjunto. El ruido también resulta informativo: de los 213 puntos etiquetados
-con menos uno, el 33,8 % son patológicos, cuatro veces la tasa base, y su índice
-de Jaccard con las anomalías de Isolation Forest es de 0,455, ya que comparten
-100 puntos; se trata de la concordancia más alta observada entre dos métodos en
-todo el trabajo.
+Ahora bien, el grupo 1, de 28 observaciones, está compuesto íntegramente por
+casos patológicos: ha aislado un fenotipo extremo con precisión perfecta, aunque
+cubre solo el 16 % de los patológicos. El ruido también informa: de los 213
+puntos etiquetados con menos uno, el 33,8 % son patológicos, cuatro veces la tasa
+base, y su índice de Jaccard con las anomalías de Isolation Forest es de 0,455,
+compartiendo 100 puntos, la concordancia más alta entre dos métodos de todo el
+trabajo.
 
-La conclusión es que en este conjunto DBSCAN rinde mejor como detector de
-anomalías que como algoritmo de agrupamiento. Su índice de Rand ajustado global,
-de 0,197, es comparable al de K-Means, pero se consigue por una vía distinta: no
-por particionar bien, sino por apartar correctamente los casos extremos. Resulta
-coherente, en ese sentido, que su información mutua normalizada, de 0,134, sea
-muy inferior a la de K-Means, que llega a 0,222, porque reparte mucha menos
-información sobre el diagnóstico al dejar el 88,7 % de los registros en un único
-grupo indiferenciado.
+En este conjunto DBSCAN rinde mejor como detector de anomalías que como
+algoritmo de agrupamiento. Su índice de Rand ajustado global, 0,197, es
+comparable al de K-Means, pero se consigue por otra vía: no por particionar bien
+sino por apartar los casos extremos. Coherentemente, su información mutua
+normalizada, 0,134, es muy inferior a la de K-Means, 0,222, porque deja el 88,7 %
+de los registros en un grupo indiferenciado.
 
 ## 6.5 Agrupamiento jerárquico aglomerativo
 """)
@@ -580,23 +560,20 @@ compatible con dos o tres grupos, lo que respalda la elección de k igual a 3.
 
 La comparación de criterios de enlace produce el aviso metodológico más
 importante de la sección. Los enlaces `average` y `complete` obtienen siluetas de
-0,52 y 0,57 respectivamente, es decir, hasta cuatro veces mejores que las de
-Ward, que se queda en 0,13, pero lo consiguen dejando más del 99 % de las
-observaciones en un único grupo y aislando dos grupitos de entre 3 y 7 puntos.
-Sus índices de Rand ajustado son prácticamente nulos, de 0,02. Es la ilustración
-perfecta de que una métrica interna alta puede corresponder a un modelo
-inservible, porque la silueta premia particiones en las que casi todo está junto
-y unos pocos puntos muy alejados forman grupos triviales.
+0,52 y 0,57, hasta cuatro veces mejores que las de Ward, que se queda en 0,13,
+pero lo consiguen dejando más del 99 % de las observaciones en un solo grupo y
+aislando dos grupitos de entre 3 y 7 puntos, con índices de Rand prácticamente
+nulos, de 0,02. Es la ilustración de que una métrica interna alta puede
+corresponder a un modelo inservible: la silueta premia particiones donde casi
+todo está junto y unos pocos puntos alejados forman grupos triviales.
 
-Con el enlace de Ward la partición es equilibrada, con 1 097, 942 y 87
-observaciones, y su índice de Rand ajustado frente a `NSP` es de 0,179, algo
-inferior al de K-Means, que llega a 0,214. Curiosamente su información mutua
-normalizada es ligeramente superior, de 0,230 frente a 0,222, lo que indica que
-Ward capta algo más de información sobre el diagnóstico pero la reparte peor
-entre los grupos, que es justo lo que penaliza el índice de Rand. La concordancia
-entre ambas particiones es de 0,371, de modo que coinciden en lo esencial pero
-no son intercambiables, sobre todo en el trazado de la frontera entre los dos
-grupos grandes.
+Con Ward la partición es equilibrada, con 1 097, 942 y 87 observaciones, y su
+índice de Rand frente a `NSP` es de 0,179, algo inferior al 0,214 de K-Means.
+Curiosamente su información mutua normalizada es algo superior, 0,230 frente a
+0,222: Ward capta algo más de información sobre el diagnóstico pero la reparte
+peor entre los grupos, que es lo que penaliza el índice de Rand. La concordancia
+entre ambas particiones es de 0,371, de modo que coinciden en lo esencial pero no
+son intercambiables, sobre todo en la frontera entre los dos grupos grandes.
 
 ## 6.6 Comparación global de los tres algoritmos
 """)
@@ -669,89 +646,75 @@ RES["tabla_clustering"] = tabla_clustering.reset_index().to_dict("records")
 
 ## 7.1 Modelos de detección de anomalías
 
-El Z-score tiene a su favor que es trivial de calcular e interpretar y que su
-umbral posee un significado probabilístico directo. En su contra pesan tres
-limitaciones: asume normalidad, es univariante y por tanto ignora por completo
-las correlaciones entre variables, y su error acumulado crece con el número de
-columnas examinadas. En este conjunto marcó el 16,1 % de las observaciones y,
-aunque alcanzó un lift de 4,90, lo hizo a costa de demasiados falsos positivos.
+El Z-score es trivial de calcular e interpretar y su umbral tiene significado
+probabilístico directo. En contra: asume normalidad, es univariante e ignora las
+correlaciones, y su error acumulado crece con el número de columnas. Marcó el
+16,1 % de las observaciones y, pese a un lift de 4,90, lo hizo a costa de
+demasiados falsos positivos.
 
-La regla de Tukey no asume ninguna distribución, es robusta frente a valores
-extremos y constituye la base del diagrama de caja, que es una herramienta
-exploratoria muy valiosa. Sin embargo, también es univariante y resulta
-inservible cuando las variables presentan fuerte asimetría o exceso de ceros,
-que es exactamente lo que ocurre aquí. Marcó el 57,4 % del conjunto con un lift
-de 1,65, de manera que no discrimina.
+La regla de Tukey no asume distribución, es robusta frente a valores extremos y
+es la base del diagrama de caja. Pero también es univariante y resulta
+inservible con fuerte asimetría o exceso de ceros, que es lo que ocurre aquí:
+marcó el 57,4 % con un lift de 1,65, de manera que no discrimina.
 
-La distancia de Mahalanobis con estimación robusta es multivariante y tiene en
-cuenta la covarianza, y el estimador de determinante mínimo evita el efecto de
-enmascaramiento que padecen la media y la covarianza muestrales. Como
-contrapartida exige que la matriz de covarianzas sea invertible, requisito que
-obligó a eliminar la variable `Width`, asume normalidad multivariante y su coste
-computacional crece de forma cúbica con el número de variables. Obtuvo un lift
-de 5,01 marcando el 5 % del conjunto, si bien el gráfico cuantil-cuantil dejó
-claro que su supuesto no se cumple.
+La distancia de Mahalanobis robusta es multivariante, tiene en cuenta la
+covarianza y su estimador de determinante mínimo evita el enmascaramiento que
+padecen la media y la covarianza muestrales. A cambio exige covarianza
+invertible, requisito que obligó a eliminar `Width`, asume normalidad
+multivariante y su coste crece de forma cúbica con el número de variables.
+Obtuvo un lift de 5,01 al 5 %, aunque el gráfico cuantil-cuantil dejó claro que
+su supuesto no se cumple.
 
-Isolation Forest no asume ninguna distribución, su coste es lineal en el número
-de observaciones, escala bien en dimensión alta y tiene pocos hiperparámetros
-que ajustar. Sus inconvenientes son que la proporción de contaminación debe
-fijarse a priori, que el resultado varía con la semilla aleatoria y que sus
-cortes son siempre paralelos a los ejes, lo que puede dificultar la detección de
-estructuras oblicuas. Fue el mejor método, con un lift de 6,55, un 54,2 % de
-casos patológicos entre los marcados y un recall del 33 %.
+Isolation Forest no asume distribución, su coste es lineal, escala bien en
+dimensión alta y tiene pocos hiperparámetros. En contra: la contaminación debe
+fijarse a priori, el resultado varía con la semilla y sus cortes son paralelos a
+los ejes, lo que dificulta detectar estructuras oblicuas. Fue el mejor, con lift
+de 6,55, un 54,2 % de patológicos entre los marcados y un recall del 33 %.
 
 El factor local de atipicidad es el único capaz de detectar anomalías locales y
-no impone ninguna forma global a los datos. En contra tiene una sensibilidad muy
-alta al número de vecinos, la degradación de la noción de densidad en dimensión
-alta y la imposibilidad de generalizar a datos nuevos salvo que se active
-explícitamente el modo de novedad. Resultó el peor de los métodos
-multivariantes, con un lift de 2,14.
+no impone forma global. En contra, la altísima sensibilidad al número de vecinos,
+la degradación de la densidad en dimensión alta y la imposibilidad de generalizar
+a datos nuevos sin activar el modo de novedad. Fue el peor de los
+multivariantes, con lift de 2,14.
 
 ## 7.2 Modelos de agrupamiento
 
-K-Means es rápido y escalable, produce grupos fácilmente interpretables a través
-de sus centroides y converge siempre. A cambio exige fijar el número de grupos,
-supone que estos son esféricos y de tamaño similar, sus centroides no son
-robustos frente a valores atípicos y solo garantiza alcanzar óptimos locales.
-Fue el mejor de los tres, con un índice de Rand ajustado de 0,214 y tres
-fenotipos clínicamente coherentes.
+K-Means es rápido y escalable, produce grupos interpretables mediante sus
+centroides y converge siempre. A cambio exige fijar el número de grupos, los
+supone esféricos y de tamaño similar, sus centroides no son robustos frente a
+atípicos y solo garantiza óptimos locales. Fue el mejor de los tres, con índice
+de Rand ajustado de 0,214 y tres fenotipos clínicamente coherentes.
 
-DBSCAN no exige fijar el número de grupos, admite grupos de forma arbitraria e
-identifica el ruido de manera explícita. Sus desventajas son la enorme
-sensibilidad al par de parámetros eps y min_samples, el fracaso cuando la
-densidad varía de forma continua y la degradación en dimensión alta. Aquí
-produjo dos grupos muy desiguales, de 1 885 y 28 observaciones, más 213 puntos
-de ruido, y un índice de Rand ajustado de 0,197; resultó útil como detector pero
-no como partición.
+DBSCAN no exige fijar el número, admite formas arbitrarias e identifica el ruido
+de manera explícita. Sus desventajas: enorme sensibilidad a eps y min_samples,
+fracaso cuando la densidad varía de forma continua y degradación en dimensión
+alta. Produjo dos grupos muy desiguales, de 1 885 y 28 observaciones, más 213
+puntos de ruido, con índice de 0,197; útil como detector pero no como partición.
 
-El agrupamiento jerárquico produce la jerarquía completa, de modo que el número
-de grupos puede decidirse después, su dendrograma es muy interpretable y el
-resultado es determinista. En su contra están el coste cuadrático en memoria y
-tiempo, la imposibilidad de deshacer una fusión ya realizada y una fuerte
-dependencia del criterio de enlace. Con Ward obtuvo un índice de Rand ajustado
-de 0,179, mientras que los enlaces `average` y `complete` degeneraron pese a
-exhibir siluetas mucho más altas.
+El jerárquico produce la jerarquía completa, de modo que el número de grupos se
+decide después, su dendrograma es muy interpretable y el resultado es
+determinista. En contra, el coste cuadrático en memoria y tiempo, la
+imposibilidad de deshacer una fusión y la fuerte dependencia del criterio de
+enlace. Con Ward obtuvo 0,179, mientras que `average` y `complete` degeneraron
+pese a siluetas mucho más altas.
 
 ## 7.3 Síntesis metodológica
 
-De la comparación se desprenden tres lecciones transversales. La primera es que
-las métricas internas no bastan por sí solas. El coeficiente de silueta escogía
-dos grupos en K-Means, partición con un índice de Rand ajustado de 0,016, y
-premiaba los enlaces degenerados del jerárquico con valores de 0,52 y 0,57 pese
-a que dejaban el 99 % de los datos en un solo grupo. Sin una referencia externa
-o sin conocimiento del dominio, esos criterios habrían llevado a conclusiones
-erróneas.
+De la comparación se desprenden tres lecciones. Las métricas internas no bastan:
+la silueta escogía dos grupos en K-Means, partición con índice de Rand de 0,016,
+y premiaba los enlaces degenerados del jerárquico con 0,52 y 0,57 pese a dejar el
+99 % de los datos en un solo grupo. Sin referencia externa ni conocimiento del
+dominio, esos criterios habrían llevado a conclusiones erróneas.
 
-La segunda es que los supuestos distribucionales importan más que la
-sofisticación del método. Los dos algoritmos que no asumen ninguna distribución,
-Isolation Forest y K-Means, fueron los mejores de su categoría, y lo fueron
-precisamente en un conjunto de datos fuertemente asimétrico.
+Los supuestos distribucionales importan más que la sofisticación del método: los
+dos algoritmos que no asumen ninguna distribución, Isolation Forest y K-Means,
+fueron los mejores de su categoría, y en un conjunto fuertemente asimétrico.
 
-La tercera es que la convergencia entre técnicas independientes constituye la
-mejor evidencia disponible. El grupo 0 de K-Means, el grupo 1 y el ruido de
-DBSCAN, y las anomalías de Isolation Forest apuntan al mismo subconjunto de
-trazados. Tres algoritmos con criterios matemáticos distintos coinciden porque
-existe una estructura real que describir.
+Y la convergencia entre técnicas independientes es la mejor evidencia
+disponible. El grupo 0 de K-Means, el grupo 1 y el ruido de DBSCAN, y las
+anomalías de Isolation Forest apuntan al mismo subconjunto de trazados: tres
+algoritmos con criterios distintos coinciden porque hay una estructura real que
+describir.
 
 # 8. Conclusiones
 """)
@@ -806,18 +769,17 @@ print("Figuras guardadas en '%s/' (%d archivos)."
     md(r"""
 ## 8.1 Sobre el análisis exploratorio
 
-El análisis exploratorio no fue un trámite previo, sino que determinó todas las
-decisiones posteriores. Permitió descubrir que las tres últimas filas del
-archivo eran artefactos de exportación y no pacientes; que `LBE` duplica a `LB`,
-que `DR` es constante y que `Width` equivale exactamente a la diferencia entre
-`Max` y `Min`, redundancia esta última que hacía singular la matriz de
-covarianzas e impedía calcular la distancia de Mahalanobis; y que las diez
-variables comprendidas entre `A` y `SUSP` son una recodificación de la etiqueta
-`CLASS`. De las 40 columnas iniciales solo 20 son descriptores genuinos.
+El análisis exploratorio no fue un trámite previo sino que determinó todas las
+decisiones posteriores: descubrió que las tres últimas filas eran artefactos y no
+pacientes; que `LBE` duplica a `LB`, que `DR` es constante y que `Width` equivale
+exactamente a la diferencia entre `Max` y `Min`, redundancia que hacía singular
+la matriz de covarianzas e impedía calcular la distancia de Mahalanobis; y que
+las diez variables entre `A` y `SUSP` recodifican `CLASS`. De las 40 columnas
+iniciales solo 20 son descriptores genuinos.
 
 El estudio de las distribuciones reveló asimetrías extremas y colas pesadas, lo
-que permitió anticipar, y después confirmar, que los métodos basados en la
-hipótesis de normalidad rendirían peor que los no paramétricos.
+que permitió anticipar y después confirmar que los métodos basados en normalidad
+rendirían peor que los no paramétricos.
 
 ## 8.2 Sobre el tratamiento de los valores faltantes
 
@@ -831,81 +793,73 @@ de los cuales alcanzaría a la vez el valor extremo de diez variables distintas,
 combinación que no se da en ningún trazado real, y habría contaminado tanto la
 detección de anomalías como los centroides de K-Means.
 
-El experimento controlado del apartado 3.3 aporta la respuesta a la pregunta
-general. Cuando los faltantes son reales y dispersos, la mejor estrategia es la
-imputación por vecinos más cercanos, porque aprovecha la correlación entre
-variables, y la mediana es la mejor alternativa simple para las variables
-sesgadas. La media, que suele aplicarse por costumbre, distorsiona la forma de
-las distribuciones asimétricas, y la moda resulta la peor opción para variables
-continuas.
+El experimento del apartado 3.3 responde a la pregunta general: cuando los
+faltantes son reales y dispersos, la mejor estrategia es la imputación por
+vecinos más cercanos, porque aprovecha la correlación entre variables, y la
+mediana es la mejor alternativa simple para las sesgadas. La media, que suele
+aplicarse por costumbre, distorsiona la forma de las distribuciones asimétricas,
+y la moda es la peor opción para variables continuas.
 
 ## 8.3 Sobre la detección de anomalías
 
 Isolation Forest es el método elegido. Marcando solo el 5 % de los registros, el
-54,2 % de los señalados resultaron ser casos patológicos frente a una tasa base
-del 8,3 %, lo que supone un enriquecimiento de 6,6 veces y la recuperación de un
-tercio de todos los casos graves. Su perfil medio, caracterizado por
-deceleraciones prolongadas y severas, variabilidad errática y bradicardia,
-reproduce la descripción clínica de un trazado no tranquilizador sin haber visto
-ni un solo diagnóstico.
+54,2 % de los señalados resultaron patológicos frente a una tasa base del 8,3 %:
+un enriquecimiento de 6,6 veces y la recuperación de un tercio de los casos
+graves. Su perfil medio, con deceleraciones prolongadas y severas, variabilidad
+errática y bradicardia, reproduce la descripción clínica de un trazado no
+tranquilizador sin haber visto un solo diagnóstico.
 
 Los métodos univariantes quedaron descartados por marcar el 16 % y el 57 % del
-conjunto respectivamente. El factor local de atipicidad, pese a su sofisticación
-teórica, fue el peor de los multivariantes, porque en veinte dimensiones la
-densidad local pierde contraste y porque los casos patológicos de este conjunto
-no son puntos aislados sino una región periférica poblada que el método
-interpreta como un vecindario legítimo.
+conjunto. El factor local de atipicidad, pese a su sofisticación teórica, fue el
+peor de los multivariantes, porque en veinte dimensiones la densidad local pierde
+contraste y porque los casos patológicos no son puntos aislados sino una región
+periférica poblada que el método toma por un vecindario legítimo.
 
-El bajo solapamiento entre métodos, con índices de Jaccard que van de 0,07 a
-0,37, demuestra que ser una anomalía es una noción relativa al método empleado.
-Elegir un detector exige, por tanto, un criterio externo de utilidad; sin él, la
-elección sería arbitraria.
+El bajo solapamiento entre métodos, con índices de Jaccard de 0,07 a 0,37,
+demuestra que ser una anomalía es una noción relativa al método. Elegir detector
+exige un criterio externo de utilidad; sin él la elección sería arbitraria.
 
 ## 8.4 Sobre el agrupamiento
 
-K-Means con tres grupos es el modelo elegido, con un índice de Rand ajustado de
-0,214 frente a `NSP` y una prueba chi-cuadrado que descarta el azar. Los tres
-grupos admiten lectura clínica directa: un grupo tranquilizador de 1 087
-registros con un 97,1 % de casos normales, un grupo de vigilancia de 835
-registros con un 31 % de sospechosos y un grupo comprometido de 204 registros
-con un 51,5 % de patológicos, que concentra el 60 % de todos los casos graves
-del conjunto.
+K-Means con tres grupos es el modelo elegido, con índice de Rand ajustado de
+0,214 frente a `NSP` y una prueba chi-cuadrado que descarta el azar. Los grupos
+admiten lectura clínica directa: uno tranquilizador de 1 087 registros con un
+97,1 % de normales, otro de vigilancia de 835 registros con un 31 % de
+sospechosos y otro comprometido de 204 registros con un 51,5 % de patológicos,
+que concentra el 60 % de todos los casos graves.
 
 DBSCAN no logró una partición útil porque los datos forman una nube única de
-densidad decreciente, sin los valles que el algoritmo necesita; sin embargo
-aisló un grupo de 28 casos íntegramente patológicos y su ruido coincide en un
-46 %, medido por el índice de Jaccard, con las anomalías de Isolation Forest. El
-jerárquico con enlace de Ward produjo una partición equilibrada y coherente, con
-un índice de 0,179, mientras que los enlaces `average` y `complete` degeneraron
-pese a exhibir siluetas mucho más altas.
+densidad decreciente, sin los valles que necesita; aun así aisló un grupo de 28
+casos íntegramente patológicos y su ruido coincide en un 46 %, por índice de
+Jaccard, con las anomalías de Isolation Forest. El jerárquico con Ward produjo
+una partición equilibrada y coherente, con 0,179, mientras que `average` y
+`complete` degeneraron pese a siluetas mucho más altas.
 
-El valor moderado de todos los índices de Rand ajustado tiene una explicación
-sustantiva y no metodológica: los algoritmos separan bien los extremos, pero la
-categoría de los sospechosos es por naturaleza una zona de transición y no un
-fenotipo con frontera propia. Ningún método no supervisado puede recuperar una
-categoría que no forma un grupo en el espacio de características.
+El valor moderado de todos los índices tiene explicación sustantiva y no
+metodológica: los algoritmos separan bien los extremos, pero la categoría de los
+sospechosos es una zona de transición y no un fenotipo con frontera propia.
+Ningún método no supervisado puede recuperar una categoría que no forma grupo en
+el espacio de características.
 
 ## 8.5 Conclusión general
 
-El trabajo muestra que el aprendizaje no supervisado recupera estructura
-clínicamente válida en los datos de cardiotocografía. Sin acceder a ningún
-diagnóstico, los algoritmos identificaron el subconjunto de trazados
-comprometidos y un gradiente de gravedad coherente con la clasificación
-obstétrica.
+El aprendizaje no supervisado recupera estructura clínicamente válida en los
+datos de cardiotocografía: sin acceder a ningún diagnóstico, los algoritmos
+identificaron el subconjunto de trazados comprometidos y un gradiente de gravedad
+coherente con la clasificación obstétrica.
 
-La conclusión práctica es que ambas técnicas resultan complementarias y no
-alternativas. Isolation Forest responde a la pregunta de qué registros concretos
-hay que revisar con prioridad, mientras que K-Means responde a la de qué tipos
-de trazado existen en la población. Un sistema de apoyo a la decisión clínica se
-beneficiaría de las dos: el agrupamiento para estratificar a la población y la
-detección de anomalías para priorizar la revisión individual.
+La conclusión práctica es que ambas técnicas son complementarias y no
+alternativas. Isolation Forest responde a qué registros concretos revisar con
+prioridad y K-Means a qué tipos de trazado existen en la población; un sistema de
+apoyo a la decisión clínica se beneficiaría de las dos, el agrupamiento para
+estratificar y la detección de anomalías para priorizar la revisión individual.
 
 La lección metodológica de mayor alcance es que la calidad de un modelo no
-supervisado no puede juzgarse solo con métricas internas. En dos ocasiones a lo
-largo de este trabajo el coeficiente de silueta habría conducido a la peor
-decisión posible, al elegir dos grupos en K-Means y al preferir los enlaces
-degenerados del agrupamiento jerárquico. El conocimiento del dominio y una
-referencia externa, cuando existe, resultan insustituibles.
+supervisado no puede juzgarse solo con métricas internas. En dos ocasiones el
+coeficiente de silueta habría conducido a la peor decisión posible: al elegir dos
+grupos en K-Means y al preferir los enlaces degenerados del jerárquico. El
+conocimiento del dominio y una referencia externa, cuando existe, son
+insustituibles.
 
 # Referencias
 

@@ -23,59 +23,42 @@ def construir():
 
 ## Resumen
 
-Este cuaderno desarrolla el flujo completo de trabajo de aprendizaje no
-supervisado que solicita la actividad, aplicado al conjunto de datos de
-cardiotocografía. Se trata de 2 126 registros de monitoreo fetal descritos por
-21 variables cuantitativas que un sistema informático extrae de forma automática
-de los trazados de frecuencia cardiaca fetal y de actividad uterina.
+Este cuaderno desarrolla el flujo de aprendizaje no supervisado que solicita la
+actividad sobre el conjunto de datos de cardiotocografía: 2 126 registros de
+monitoreo fetal descritos por 21 variables que un sistema informático extrae de
+los trazados de frecuencia cardiaca fetal y de actividad uterina.
 
-El trabajo avanza en el orden que exige el enunciado. Las secciones 1 y 2 se
-ocupan de la carga de los datos, del diccionario de variables y del análisis
-exploratorio, que incluye los estadísticos descriptivos de las variables
-numéricas, las frecuencias de las categóricas y la matriz de correlaciones. La
-sección 3 diagnostica los valores faltantes, justifica la decisión que se toma
-con ellos y la respalda con un experimento controlado de imputación. La sección
-4 prepara la matriz de características, es decir, selecciona las variables que
-alimentarán a los modelos, depura las redundancias y estandariza las escalas. La
-sección 5 aplica cinco técnicas de detección de anomalías y la sección 6, tres
-algoritmos de agrupamiento. Las secciones 7 y 8 comparan las ventajas y
-desventajas de cada modelo y recogen las conclusiones.
+Las secciones 1 y 2 cubren la carga, el diccionario de variables y el análisis
+exploratorio. La 3 diagnostica los valores faltantes y justifica la decisión con
+un experimento controlado. La 4 prepara la matriz de características. La 5
+aplica cinco técnicas de detección de anomalías y la 6, tres de agrupamiento.
+Las secciones 7 y 8 comparan los modelos y recogen las conclusiones.
 
-Conviene aclarar desde el principio una decisión metodológica que condiciona la
-validez de todo lo que sigue. El conjunto de datos incluye dos variables de
-diagnóstico, `CLASS` y `NSP`, que fueron etiquetadas por obstetras. Ninguna de
-las dos se utiliza para ajustar ningún modelo, porque todo el análisis es no
-supervisado. Se reservan únicamente como verdad de referencia externa, de modo
-que al terminar cada etapa se pueda comprobar si las anomalías y los grupos
-encontrados tienen algún sentido clínico. Esa separación estricta entre lo que
-el algoritmo ve y lo que sirve para juzgarlo es la que permite afirmar que los
-resultados no son un artefacto del procedimiento.
+Una precisión metodológica que condiciona todo lo demás: el conjunto incluye dos
+variables de diagnóstico, `CLASS` y `NSP`, etiquetadas por obstetras, y ninguna
+se usa para ajustar modelo alguno. Se reservan como verdad de referencia externa
+para comprobar después si las anomalías y los grupos hallados tienen sentido
+clínico. Esa separación es la que permite afirmar que los resultados no son un
+artefacto del procedimiento.
 
-Todo el código de este cuaderno, junto con las figuras, los resultados
-numéricos y el informe en PDF, está disponible en el repositorio público
-https://github.com/amenesesy/actividad-ml-ctg. Pulsando el distintivo que
-encabeza esta página el cuaderno se abre directamente en Google Colab y puede
-ejecutarse de principio a fin sin instalar nada.
+El código, las figuras y el informe están en el repositorio público
+https://github.com/amenesesy/actividad-ml-ctg; el distintivo que encabeza esta
+página abre el cuaderno en Google Colab.
 """)
 
     # =========================================================== 0. ENTORNO
     md(r"""
 # 0. Configuración del entorno
 
-El cuaderno está preparado para ejecutarse en dos entornos sin ningún cambio
-manual. En una instalación local basta con tener el archivo `CTG.csv` junto al
-cuaderno. En Google Colab, al que se accede mediante el distintivo que encabeza
-el documento, la primera celda detecta el entorno, comprueba que estén las
-librerías necesarias, instala las que falten y descarga el conjunto de datos
-desde el repositorio público del trabajo. La ejecución completa tarda alrededor
-de dos minutos.
+El cuaderno se ejecuta sin cambios en local o en Google Colab. La primera celda
+detecta el entorno, instala las librerías que falten y descarga el conjunto de
+datos desde el repositorio del trabajo; la ejecución completa tarda unos dos
+minutos.
 
-La segunda celda reúne en un solo lugar todas las librerías del ecosistema
-científico de Python que se van a utilizar y fija la semilla aleatoria. Esto
-último no es un detalle menor: Isolation Forest, K-Means y el experimento de
-imputación son algoritmos estocásticos, de manera que sin una semilla fija
-producirían cifras distintas en cada ejecución y ninguna de las conclusiones
-sería verificable.
+La segunda reúne las librerías y fija la semilla aleatoria, detalle que no es
+menor: Isolation Forest, K-Means y el experimento de imputación son estocásticos
+y sin semilla fija darían cifras distintas en cada ejecución, con lo que ninguna
+conclusión sería verificable.
 """)
 
     code(r'''
@@ -259,34 +242,28 @@ print("Librerias cargadas correctamente. Semilla aleatoria fijada en", SEMILLA)
 
 ## 1.1 Contexto del problema
 
-La cardiotocografía es la prueba de vigilancia fetal más extendida del mundo.
-Registra de manera simultánea la frecuencia cardiaca del feto y la actividad
-contráctil del útero durante el embarazo tardío y el trabajo de parto. Su
-interpretación visual tiene, sin embargo, una concordancia entre observadores
-notoriamente baja, y por ese motivo desde los años noventa se desarrollaron
-sistemas de análisis automático capaces de resumir cada trazado en un vector de
-descriptores numéricos.
+La cardiotocografía registra a la vez la frecuencia cardiaca del feto y la
+actividad contráctil del útero durante el embarazo tardío y el parto. Su
+interpretación visual tiene una concordancia entre observadores notoriamente
+baja, y por eso desde los años noventa existen sistemas que resumen cada trazado
+en un vector de descriptores numéricos.
 
-El archivo `CTG.csv` es precisamente el resultado de aplicar el sistema SisPorto
-2.0 (Ayres-de-Campos et al., 2000) a 2 126 trazados. Cada fila corresponde a un
-segmento de registro y cada columna a un descriptor calculado de forma
-automática. Además, tres obstetras etiquetaron cada segmento con dos variables
-de diagnóstico: `CLASS`, que recoge el patrón morfológico de la frecuencia
-cardiaca fetal en diez categorías, y `NSP`, que resume el estado del feto en
-tres niveles, normal, sospechoso y patológico.
+El archivo `CTG.csv` es el resultado de aplicar el sistema SisPorto 2.0
+(Ayres-de-Campos et al., 2000) a 2 126 trazados: cada fila es un segmento de
+registro y cada columna un descriptor automático. Tres obstetras etiquetaron
+además cada segmento con `CLASS`, el patrón morfológico en diez categorías, y
+`NSP`, el estado fetal en tres niveles: normal, sospechoso y patológico.
 
 ## 1.2 Por qué este conjunto se ajusta a la actividad
 
-El problema encaja de forma natural con las dos técnicas que pide el enunciado.
-En cuanto a la detección de anomalías, los casos patológicos son por definición
-minoritarios, apenas el 8,3 % del total, de modo que un buen detector de valores
-atípicos debería enriquecerse en ellos sin haberlos visto nunca. Eso permite
-medir de forma objetiva si el detector resulta útil y no solo si es
-matemáticamente correcto. En cuanto al agrupamiento, si la frecuencia cardiaca
-fetal presenta realmente patrones morfológicos diferenciados, un algoritmo de
-clustering debería recuperarlos al menos en parte. El contraste posterior con
-`NSP` cuantifica cuánta de esa estructura es real y cuánta es un artefacto del
-algoritmo.
+El problema encaja con las dos técnicas que pide el enunciado. Los casos
+patológicos son minoritarios, apenas el 8,3 % del total, de modo que un buen
+detector de atípicos debería enriquecerse en ellos sin haberlos visto nunca: eso
+permite medir de forma objetiva si resulta útil y no solo si es matemáticamente
+correcto. Y si la frecuencia cardiaca fetal presenta patrones morfológicos
+diferenciados, un algoritmo de agrupamiento debería recuperarlos al menos en
+parte; el contraste posterior con `NSP` cuantifica cuánta de esa estructura es
+real y cuánta un artefacto del algoritmo.
 """)
 
     code(r'''
@@ -310,11 +287,10 @@ df_bruto.head(3)
 
     md(r"""
 Antes de calcular ningún estadístico conviene documentar qué significa cada
-columna y, sobre todo, qué papel juega. Sin ese paso el análisis exploratorio se
-convierte en estadística ciega, porque no hay forma de decidir qué variables son
-informativas, cuáles son simples identificadores del registro, cuáles duplican
-información que ya está en otra parte y cuáles son etiquetas que deben quedar
-apartadas del modelado.
+columna y qué papel juega. Sin ese paso el análisis se vuelve estadística ciega:
+no hay forma de decidir qué variables son informativas, cuáles simples
+identificadores, cuáles duplican información y cuáles son etiquetas que deben
+quedar apartadas del modelado.
 """)
 
     code(r'''
@@ -376,10 +352,9 @@ RES["n_columnas"] = int(df_bruto.shape[1])
 ''')
 
     md(r"""
-El reparto por rol deja ver que el archivo contiene bastante menos información
-de la que sugieren sus 40 columnas. Cinco de ellas identifican el registro, una
-duplica a otra, otra es constante, diez son una recodificación de la etiqueta
-`CLASS` y dos son las propias etiquetas. Solo veintiuna describen realmente el
-trazado, y en la sección 4 se comprobará que incluso entre esas hay una
-redundancia exacta.
+El reparto por rol deja ver que el archivo contiene menos información de la que
+sugieren sus 40 columnas: cinco identifican el registro, una duplica a otra, otra
+es constante, diez recodifican la etiqueta `CLASS` y dos son las propias
+etiquetas. Solo veintiuna describen el trazado, y en la sección 4 se verá que
+incluso entre esas hay una redundancia exacta.
 """)
