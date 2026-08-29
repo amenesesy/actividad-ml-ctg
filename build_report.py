@@ -50,6 +50,46 @@ DIR_RECORTADAS = pathlib.Path("capturas_recortadas")
 
 ANCHO_CAPTURA = 14.6 * cm
 
+# Titulo de cada celda tal como se compone en el rotulo del listado. En el
+# cuaderno los comentarios van sin tildes, porque asi se escriben los
+# comentarios del codigo; el rotulo, en cambio, es prosa del informe y se
+# acentua como el resto del texto.
+TITULOS_CELDA = {
+    "0.1": "Preparación del entorno y compatibilidad con Google Colab",
+    "0.2": "Importación de librerías y configuración global",
+    "1.1": "Carga del conjunto de datos",
+    "1.2": "Diccionario de variables",
+    "2.1": "Estructura general del conjunto de datos",
+    "2.2": "Estadísticos descriptivos de las variables numéricas",
+    "2.3": "Variables categóricas: categorías y frecuencias",
+    "2.4": "Matriz de correlaciones entre las variables numéricas",
+    "2.5": "Distribución de las variables más relevantes",
+    "3.1": "Diagnóstico de los valores faltantes",
+    "3.2": "Aplicación de la decisión: depuración del conjunto",
+    "3.3": "Experimento controlado de imputación",
+    "3.4": "Efecto visual de la imputación sobre las distribuciones",
+    "4.1": "Construcción de la matriz de características",
+    "4.2": "Análisis de componentes principales",
+    "5.1": "Métodos univariantes: Z-score y regla de Tukey",
+    "5.2": "Distancia de Mahalanobis con estimación robusta de la covarianza",
+    "5.3": "Isolation Forest",
+    "5.4": "Factor local de atipicidad (LOF)",
+    "5.5": "Evaluación comparativa contra la verdad de referencia externa",
+    "5.6": "Concordancia entre detectores y visualización",
+    "6.1": "Barrido del número de grupos k para K-Means",
+    "6.2": "Representación gráfica de los criterios de selección de k",
+    "6.3": "Ajuste final de K-Means y perfilado de los grupos",
+    "6.4": "Validación externa: contraste de los grupos con el diagnóstico NSP",
+    "6.5": "Relación entre los grupos y las anomalías de la sección 5",
+    "6.6": "DBSCAN: elección de eps mediante el gráfico de k-distancias",
+    "6.7": "Barrido de parámetros y ajuste final de DBSCAN",
+    "6.8": "Interpretación de la salida de DBSCAN",
+    "6.9": "Agrupamiento jerárquico: dendrograma y criterios de enlace",
+    "6.10": "Comparación final de los tres algoritmos de agrupamiento",
+    "8.1": "Resumen ejecutivo de resultados y volcado a disco",
+}
+
+
 TAM_CUERPO = 12                      # exigido: Calibri 12
 INTERLINEADO = round(TAM_CUERPO * 1.5)   # exigido: interlineado 1,5
 TAM_CODIGO = 5.4                     # monoespaciada para los listados de codigo
@@ -90,8 +130,13 @@ def registrar_fuentes():
 # texto normal y el gris del pie de pagina.
 CIAN = "#0098CD"           # color corporativo: rotulos, titulos y bordes
 CIAN_CLARO = "#9CD4EA"     # tinte para rejillas y recuadros
-GRIS_TEXTO = "#333333"     # color del texto normal en el estilo Normal del Word
+GRIS_TEXTO = "#333333"     # color de los titulos y de los rotulos de la plantilla
 GRIS_PIE = "#777777"       # color del pie de pagina en la plantilla
+
+# La prosa del informe va toda de un mismo color, negro, y lo que en ella se
+# resalta -los nombres de variable y de archivo- se marca con la negrita y no
+# con un color distinto.
+NEGRO_PROSA = "#000000"
 
 AZUL = colors.HexColor(CIAN)                 # acento del documento
 FONDO_CODIGO = colors.HexColor("#F5F6F8")
@@ -103,7 +148,7 @@ BORDE_SALIDA = colors.HexColor(CIAN_CLARO)
 def construir_estilos():
     """Devuelve el diccionario de estilos de parrafo del informe."""
     base = dict(fontName="Calibri", fontSize=TAM_CUERPO, leading=INTERLINEADO,
-                textColor=colors.HexColor(GRIS_TEXTO))
+                textColor=colors.HexColor(NEGRO_PROSA))
     return {
         "cuerpo": ParagraphStyle("cuerpo", alignment=TA_JUSTIFY, spaceAfter=4, **base),
         # Sangria francesa de 1,25 cm en la lista de referencias, segun APA.
@@ -120,11 +165,14 @@ def construir_estilos():
         # cuerpo grande, apartado 2 en el cian corporativo y apartado 3 en
         # negrita al tamano del texto normal.
         "h1": ParagraphStyle("h1", fontName="Calibri", fontSize=18, leading=22,
+                             keepWithNext=1,
                              textColor=colors.HexColor(GRIS_TEXTO),
                              spaceBefore=10, spaceAfter=6),
         "h2": ParagraphStyle("h2", fontName="Calibri", fontSize=14, leading=18,
+                             keepWithNext=1,
                              textColor=colors.HexColor(CIAN), spaceBefore=8, spaceAfter=4),
         "h3": ParagraphStyle("h3", fontName="Calibri-B", fontSize=12, leading=16,
+                             keepWithNext=1,
                              textColor=colors.HexColor(GRIS_TEXTO), spaceBefore=7, spaceAfter=3),
         "codigo": ParagraphStyle("codigo", fontName="Consolas", fontSize=TAM_CODIGO,
                                  leading=TAM_CODIGO + 0.9),
@@ -164,18 +212,24 @@ def formato_inline(texto):
     Cubre negrita, cursiva, codigo en linea, enlaces y entidades HTML.
     """
     texto = html.escape(texto)
-    # Codigo en linea `x` -> fuente monoespaciada resaltada.
+    # Espacio duro en el separador de millares: sin el, una cifra como "2 126"
+    # puede partirse y dejar el "2" al final de una linea y el "126" al principio
+    # de la siguiente.
+    texto = re.sub(r"(?<=\d) (?=\d{3}(?!\d))", " ", texto)
+    # Codigo en linea `x` -> monoespaciada en negrita, del mismo negro que el
+    # resto de la prosa: el resalte lo da el trazo y no un color aparte.
     texto = re.sub(r"`([^`]+)`",
-                   r'<font face="Consolas" size="10" color="#8B2252">\1</font>', texto)
+                   r'<font face="Consolas" size="10" color="%s"><b>\1</b></font>'
+                   % NEGRO_PROSA, texto)
     # Negrita **x** y cursiva *x* (la negrita primero para no romperla).
     texto = re.sub(r"\*\*([^*]+)\*\*", r"<b>\1</b>", texto)
     texto = re.sub(r"(?<!\*)\*([^*\n]+)\*(?!\*)", r"<i>\1</i>", texto)
-    # Enlaces [texto](url) -> texto subrayado en azul.
+    # Enlaces [texto](url) y URLs sueltas de las referencias: siguen siendo
+    # pulsables, pero se imprimen en el mismo negro que la prosa que los rodea.
     texto = re.sub(r"\[([^\]]+)\]\(([^)]+)\)",
-                   r'<link href="\2" color="#0098CD">\1</link>', texto)
-    # URLs sueltas que quedan en las referencias bibliograficas.
+                   r'<link href="\2" color="%s">\1</link>' % NEGRO_PROSA, texto)
     texto = re.sub(r"(?<![\">])(https?://[^\s<]+)",
-                   r'<link href="\1" color="#0098CD">\1</link>', texto)
+                   r'<link href="\1" color="%s">\1</link>' % NEGRO_PROSA, texto)
     return texto
 
 
@@ -757,8 +811,8 @@ def indice(estilos):
         "después en formato APA, con su número, su título y su nota, para que se "
         "vea a un tamaño legible y no aparezca dos veces. El cuaderno completo "
         "está disponible en el "
-        'repositorio público <link href="%s" color="#0098CD">%s</link>.'
-        % (REPO_URL, REPO_URL), estilos["cuerpo"]))
+        'repositorio público <link href="%s" color="%s">%s</link>.'
+        % (REPO_URL, NEGRO_PROSA, REPO_URL), estilos["cuerpo"]))
     return elementos
 
 
@@ -793,7 +847,7 @@ def main():
         n_listado += 1
         titulo = re.search(r"^# Celda ([\d.]+)\.\s*(.+?)\.?$", fuente, flags=re.M)
         clave = titulo.group(1) if titulo else None
-        rotulo = ("Celda %s. %s" % (titulo.group(1), titulo.group(2))
+        rotulo = ("Celda %s. %s" % (clave, TITULOS_CELDA.get(clave, titulo.group(2)))
                   if titulo else "Código %d" % n_listado)
 
         # Cada celda de codigo se reproduce como captura del cuaderno abierto en

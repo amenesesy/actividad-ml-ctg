@@ -154,17 +154,21 @@ RES["pca_n80"] = n80
 ''')
 
     md(r"""
-La primera componente explica el 27,5 % de la varianza y la segunda el 15,8 %,
+La Figura 5 recoge el reparto de varianza. La primera componente explica el
+27,5 % y la segunda el 15,8 %,
 de modo que entre ambas apenas superan el 43 % y hacen falta nueve para alcanzar
 el 80 %. El problema no es de dimensionalidad trivial: no puede resumirse en dos
 ejes sin perder información sustancial, así que las dos primeras componentes se
 usarán solo para visualizar.
 
-Las cargas admiten lectura clínica directa. La primera componente contrapone las
-variables de tendencia central y anchura del histograma, `Mean`, `Mode`, `Median`
-y `Max`, frente a las de variabilidad anormal, `ASTV` y `ALTV`. La segunda separa
-la actividad del registro, medida por `AC`, `FM` y `UC`, de las deceleraciones.
-Son los dos ejes con los que un obstetra describiría un trazado.
+Las cargas admiten lectura clínica directa. La primera componente contrapone la
+tendencia central del histograma, con `Mean` en +0,36, `Median` en +0,33, `Mode`
+en +0,32 y `Min` en +0,32, frente a la variabilidad y las deceleraciones, con
+`MSTV` en −0,31, `Variance` en −0,28, `DL` en −0,28 y `DP` en −0,23: separa los
+trazados de línea de base alta y estable de los de línea baja, errática y con
+caídas. La segunda opone la amplitud del histograma, `Max` en +0,42 y `Nmax` en
++0,30, a la variabilidad anormal, `ALTV` en −0,20 y `ASTV` en −0,16. Son los dos
+ejes con los que un obstetra describiría un trazado.
 
 # 5. Detección de anomalías
 
@@ -174,13 +178,14 @@ Una anomalía es una observación que se aparta del comportamiento mayoritario d
 conjunto. La pregunta operativa aquí es si se pueden señalar automáticamente los
 trazados inusuales sin recurrir al diagnóstico del obstetra.
 
-Se aplican cinco técnicas de tres familias. El Z-score y la regla de Tukey son
-univariantes: el primero marca una observación cuando algún valor tipificado
+Se aplican cinco técnicas de tres familias. El Z-score y la regla de Tukey
+(Tukey, 1977) son univariantes: el primero marca una observación cuando algún valor tipificado
 supera 3 en valor absoluto, y asume normalidad; la segunda la marca cuando algún
-valor cae fuera del intervalo entre el primer cuartil menos vez y media el rango
+valor cae fuera del intervalo entre el primer cuartil menos una vez y media el rango
 intercuartílico y el tercer cuartil más esa cantidad, sin asumir distribución
 alguna pero examinando las variables de una en una. La distancia de Mahalanobis
-con estimación robusta de la covarianza es multivariante, mide la separación al
+con estimación robusta de la covarianza por determinante de mínima covarianza
+(Rousseeuw y Van Driessen, 1999) es multivariante, mide la separación al
 centro ponderándola por la correlación y presupone normalidad multivariante.
 Isolation Forest es un ensamble de árboles apoyado en que los puntos raros se
 aíslan con pocos cortes aleatorios. Y el factor local de atipicidad, LOF, compara
@@ -315,7 +320,8 @@ RES["n_mahalanobis_chi2"] = int(marcados_chi2.sum())
 ''')
 
     md(r"""
-El gráfico cuantil-cuantil se separa pronto de la diagonal: las distancias
+El gráfico cuantil-cuantil de la Figura 6 se separa pronto de la diagonal: las
+distancias
 observadas crecen mucho más rápido que las que predice la chi-cuadrado. El
 supuesto de normalidad multivariante no se cumple, y por eso el umbral teórico
 marca 646 observaciones, el 30,4 % del conjunto, cifra sin sentido operativo
@@ -325,7 +331,7 @@ Forest y con LOF en igualdad de condiciones.
 
 ## 5.4 Isolation Forest
 
-Propuesto por Liu, Ting y Zhou (2008), parte de una observación sencilla: si se
+Propuesto por Liu et al. (2008), parte de una observación sencilla: si se
 particiona el espacio eligiendo al azar una variable y un punto de corte, un
 punto anómalo queda aislado en muy pocos cortes mientras que uno del núcleo denso
 necesita muchos. El algoritmo construye un bosque de árboles aleatorios y asigna
@@ -409,7 +415,7 @@ segunda.
 
 ## 5.5 Factor local de atipicidad
 
-Propuesto por Breunig y sus colaboradores en 2000, no busca puntos lejanos del
+Propuesto por Breunig et al. (2000), no busca puntos lejanos del
 centro sino situados en zonas menos densas que su propio vecindario: compara la
 densidad local de cada observación con la media de sus k vecinos, y un cociente
 muy superior a 1 indica que el punto está más solo que quienes lo rodean.
@@ -569,11 +575,13 @@ RES["jaccard_if_lof"] = float(round(jaccard[nombres.index("Isolation Forest (5 %
 ''')
 
     md(r"""
-La evaluación externa ordena los cinco detectores de forma inequívoca. Isolation
+La evaluación externa, resumida en la Figura 7, ordena los cinco detectores de
+forma inequívoca. Isolation
 Forest es el mejor con diferencia: de las 107 observaciones que marca, el 54,2 %
 son patológicas frente a una tasa base del 8,3 %, un lift de 6,55. Recupera el
 33 % de todos los casos patológicos examinando solo el 5 % de los registros, de
-modo que una revisión manual de ese 5 % encontraría uno de cada dos casos graves.
+modo que en una revisión manual de ese 5 % uno de cada dos registros sería un
+caso grave.
 
 La distancia de Mahalanobis robusta queda segunda con un lift de 5,01, resultado
 notable dado que su supuesto de normalidad está violado; el estimador robusto
@@ -587,7 +595,8 @@ local se diluye, y además los trazados patológicos no forman puntos aislados s
 una región periférica poblada que LOF interpreta como vecindario legítimo. La
 regla de Tukey no sirve en absoluto: lift de 1,65 marcando el 57 % del conjunto.
 
-Un hallazgo transversal: los índices de Jaccard son bajos en toda la matriz, y en
+La Figura 8 deja ver un hallazgo transversal: los índices de Jaccard son bajos en
+toda la matriz, y en
 particular Isolation Forest y LOF comparten apenas el 20 % de sus detecciones.
 Ser una anomalía no es una propiedad absoluta del dato sino relativa al método, y
 por eso elegir detector exige un criterio externo de utilidad como el que aporta

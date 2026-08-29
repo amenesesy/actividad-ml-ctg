@@ -16,20 +16,23 @@ mutuamente diferenciados sin recurrir a ninguna etiqueta. Se aplican tres
 algoritmos de familias distintas.
 
 K-Means es particional, minimiza la inercia dentro de cada grupo, tiende a grupos
-esféricos de tamaño parecido y exige fijar su número. DBSCAN se basa en densidad:
+esféricos de tamaño parecido y exige fijar su número. DBSCAN (Ester et al., 1996)
+se basa en densidad:
 busca regiones densas separadas por regiones vacías, admite formas arbitrarias,
 no obliga a fijar el número y etiqueta como ruido lo que no encaja. El jerárquico
-aglomerativo con criterio de Ward construye fusiones sucesivas que minimizan el
+aglomerativo con criterio de Ward (1963) construye fusiones sucesivas que minimizan el
 incremento de varianza, produce grupos compactos y anidados y permite decidir el
 número a posteriori, cortando el árbol.
 
 Se emplean dos tipos de métricas. Las internas se calculan solo con los datos: el
-coeficiente de silueta, entre menos uno y uno, que mide cohesión frente a
-separación; el índice de Davies-Bouldin, que compara dispersión y separación y
-conviene bajo; y el de Calinski-Harabasz, que relaciona la varianza entre grupos
-con la interna y conviene alto. Las externas contrastan la partición con `NSP`,
-que no interviene en el ajuste: el índice de Rand ajustado y la información mutua
-normalizada, donde un cero equivale a una partición aleatoria.
+coeficiente de silueta (Rousseeuw, 1987), entre menos uno y uno, que mide
+cohesión frente a separación; el índice de Davies-Bouldin (Davies y Bouldin,
+1979), que compara dispersión y separación y conviene bajo; y el de
+Calinski-Harabasz (Calinski y Harabasz, 1974), que relaciona la varianza entre
+grupos con la interna y conviene alto. Las externas contrastan la partición con
+`NSP`, que no interviene en el ajuste: el índice de Rand ajustado (Hubert y
+Arabie, 1985) y la información mutua normalizada, donde un cero equivale a una
+partición aleatoria.
 
 ## 6.2 K-Means: elección del número de grupos
 """)
@@ -121,15 +124,16 @@ guardar("fig_kmeans_seleccion")
 ''')
 
     md(r"""
-Los criterios no coinciden entre sí, y esa discrepancia es el hallazgo más
+Los criterios de la Figura 9 no coinciden entre sí, y esa discrepancia es el
+hallazgo más
 instructivo del apartado. La curva de inercia decrece suavemente, sin codo
 pronunciado; el criterio analítico lo sitúa en k igual a 5, pero la curvatura es
 débil, señal de que no hay grupos fuertemente separados. La silueta alcanza su
 máximo en k igual a 2, con 0,183, y todo el barrido queda por debajo de 0,19
 cuando con grupos nítidos se esperaría más de 0,5. Davies-Bouldin alcanza su
 mínimo en k igual a 7, con 1,47, y Calinski-Harabasz decrece de forma monótona,
-favoreciendo el menor k posible. Los tres criterios internos apuntan a tres
-valores distintos: 5, 2 y 2.
+favoreciendo el menor k posible. Los cuatro criterios internos no convergen: el
+codo sugiere 5, la silueta 2, Davies-Bouldin 7 y Calinski-Harabasz 2.
 
 La validación externa sí es concluyente. El índice de Rand ajustado alcanza su
 máximo inequívoco en k igual a 3, con 0,214, y cae a menos de la mitad en k igual
@@ -280,7 +284,8 @@ RES["anomalias_por_grupo"] = cruce_pct["Anomalia IF"].round(1).to_dict()
 ''')
 
     md(r"""
-El perfilado convierte tres etiquetas numéricas en tres fenotipos clínicos
+El perfil de centroides de la Figura 10 convierte tres etiquetas numéricas en
+tres fenotipos clínicos
 reconocibles.
 
 El grupo 0, con 204 observaciones y el 9,6 % del conjunto, es el trazado
@@ -298,10 +303,11 @@ El grupo 1, con 835 observaciones y el 39,3 %, corresponde a variabilidad
 reducida con taquicardia relativa: `LB` en 0,72 y `Min` en 0,88, línea de base
 elevada; `ASTV` en 0,58 y `ALTV` en 0,67, mucho tiempo con variabilidad anormal;
 y `MSTV` en menos 0,75, variabilidad efectiva baja. Reúne un 61,3 % de normales
-pero también un 31,0 % de sospechosos, casi el triple de la tasa base. Es el
+pero también un 31,0 % de sospechosos, más del doble de la tasa base. Es el
 grupo de vigilancia.
 
-El grupo 2, con 1 087 observaciones y el 51,1 %, es el trazado tranquilizador:
+El grupo 2, con 1 087 observaciones y el 51,1 %, que la Figura 11 sitúa a la
+derecha del plano principal, es el trazado tranquilizador:
 `AC` en 0,27 y `MLTV` en 0,29, con aceleraciones y buena variabilidad a largo
 plazo, junto a `ASTV` en menos 0,49 y `ALTV` en menos 0,42. Un 97,1 % de casos
 normales y apenas 7 patológicos.
@@ -467,11 +473,13 @@ RES["jaccard_ruido_if"] = round(float(jaccard_ruido), 3)
 ''')
 
     md(r"""
-DBSCAN no produce una partición útil, y el motivo es informativo. Encuentra dos
+Con el radio que señala el codo de la Figura 12, DBSCAN no produce una partición
+útil, y el motivo es informativo. Encuentra dos
 grupos y 213 puntos de ruido con un reparto radicalmente asimétrico: un grupo
 absorbe 1 885 observaciones, el 88,7 % del conjunto, y el otro apenas 28.
 
-El barrido demuestra que es estructural y no una mala elección de eps: en once de
+La Figura 13 lo confirma frente al diagnóstico real, y el barrido demuestra que
+es estructural y no una mala elección de eps: en once de
 las dieciocho combinaciones probadas devuelve un único grupo más ruido, y en las
 siete restantes el segundo nunca supera unas decenas de puntos. Los datos no
 tienen zonas de baja densidad que separen regiones densas, sino una nube única
@@ -555,7 +563,8 @@ RES["ari_kmeans_vs_jerarquico"] = round(float(adjusted_rand_score(etq_kmeans, et
 ''')
 
     md(r"""
-El dendrograma muestra un salto de altura claro en las últimas fusiones,
+El dendrograma de la Figura 14 muestra un salto de altura claro en las últimas
+fusiones,
 compatible con dos o tres grupos, lo que respalda la elección de k igual a 3.
 
 La comparación de criterios de enlace produce el aviso metodológico más
@@ -706,9 +715,13 @@ y premiaba los enlaces degenerados del jerárquico con 0,52 y 0,57 pese a dejar 
 99 % de los datos en un solo grupo. Sin referencia externa ni conocimiento del
 dominio, esos criterios habrían llevado a conclusiones erróneas.
 
-Los supuestos distribucionales importan más que la sofisticación del método: los
-dos algoritmos que no asumen ninguna distribución, Isolation Forest y K-Means,
-fueron los mejores de su categoría, y en un conjunto fuertemente asimétrico.
+Los supuestos importan más que la sofisticación del método, pero hay que
+nombrarlos con precisión. Isolation Forest ganó por no asumir distribución
+alguna, allí donde el Z-score y Mahalanobis penalizaron su hipótesis de
+normalidad sobre un conjunto fuertemente asimétrico. K-Means ganó pese a suponer
+grupos esféricos y de tamaño similar, porque ese supuesto encaja con la forma de
+estos datos, una nube única de densidad decreciente, mientras que el de DBSCAN,
+la existencia de valles de densidad, no se cumple.
 
 Y la convergencia entre técnicas independientes es la mejor evidencia
 disponible. El grupo 0 de K-Means, el grupo 1 y el ruido de DBSCAN, y las
@@ -786,9 +799,9 @@ rendirían peor que los no paramétricos.
 La respuesta correcta no consistía en elegir entre la media, la mediana o la
 moda, sino en reconocer que las filas afectadas no eran observaciones. Las 106
 celdas faltantes se concentraban en 3 filas sin diagnóstico que resultaron ser
-las filas de resumen de la hoja de cálculo original: una de mínimos y otra que
-reproduce el máximo de cada columna, coincidencia comprobada variable a
-variable. Imputarlas con la media habría fabricado tres pacientes ficticios, uno
+el pie que la hoja de cálculo original dejó bajo la tabla: una fila enteramente
+vacía, otra que reproduce el mínimo de cada columna y una tercera que reproduce
+el máximo, coincidencia comprobada variable a variable. Imputarlas con la media habría fabricado tres pacientes ficticios, uno
 de los cuales alcanzaría a la vez el valor extremo de diez variables distintas,
 combinación que no se da en ningún trazado real, y habría contaminado tanto la
 detección de anomalías como los centroides de K-Means.
@@ -815,8 +828,8 @@ peor de los multivariantes, porque en veinte dimensiones la densidad local pierd
 contraste y porque los casos patológicos no son puntos aislados sino una región
 periférica poblada que el método toma por un vecindario legítimo.
 
-El bajo solapamiento entre métodos, con índices de Jaccard de 0,07 a 0,37,
-demuestra que ser una anomalía es una noción relativa al método. Elegir detector
+El bajo solapamiento entre los cinco detectores, con índices de Jaccard de 0,07
+a 0,37, demuestra que ser una anomalía es una noción relativa al método. Elegir detector
 exige un criterio externo de utilidad; sin él la elección sería arbitraria.
 
 ## 8.4 Sobre el agrupamiento
@@ -865,32 +878,36 @@ insustituibles.
 
 Ayres-de-Campos, D., Bernardes, J., Garrido, A., Marques-de-Sá, J., &
 Pereira-Leite, L. (2000). SisPorto 2.0: A program for automated analysis of
-cardiotocograms. *Journal of Maternal-Fetal Medicine, 9*(5), 311-318.
+cardiotocograms. *Journal of Maternal-Fetal Medicine, 9*(5), 311–318.
 https://doi.org/10.1002/1520-6661(200009/10)9:5<311::AID-MFM12>3.0.CO;2-9
 
 Breunig, M. M., Kriegel, H.-P., Ng, R. T., & Sander, J. (2000). LOF:
 Identifying density-based local outliers. *Proceedings of the 2000 ACM SIGMOD
-International Conference on Management of Data*, 93-104.
+International Conference on Management of Data*, 93–104.
 https://doi.org/10.1145/342009.335388
 
-Calinski, T., & Harabasz, J. (1974). A dendrite method for cluster analysis.
-*Communications in Statistics, 3*(1), 1-27.
+Caliński, T., & Harabasz, J. (1974). A dendrite method for cluster analysis.
+*Communications in Statistics, 3*(1), 1–27.
 https://doi.org/10.1080/03610927408827101
 
+Campos, D., & Bernardes, J. (2000). *Cardiotocography* [Conjunto de datos].
+UCI Machine Learning Repository. https://doi.org/10.24432/C51S4N
+
 Davies, D. L., & Bouldin, D. W. (1979). A cluster separation measure. *IEEE
-Transactions on Pattern Analysis and Machine Intelligence, PAMI-1*(2), 224-227.
+Transactions on Pattern Analysis and Machine Intelligence, PAMI-1*(2), 224–227.
 https://doi.org/10.1109/TPAMI.1979.4766909
 
 Ester, M., Kriegel, H.-P., Sander, J., & Xu, X. (1996). A density-based
 algorithm for discovering clusters in large spatial databases with noise.
-*Proceedings of the Second International Conference on Knowledge Discovery and
-Data Mining (KDD-96)*, 226-231.
+En E. Simoudis, J. Han y U. Fayyad (Eds.), *Proceedings of the Second
+International Conference on Knowledge Discovery and Data Mining*
+(pp. 226–231). AAAI Press.
 
 Hubert, L., & Arabie, P. (1985). Comparing partitions. *Journal of
-Classification, 2*(1), 193-218. https://doi.org/10.1007/BF01908075
+Classification, 2*(1), 193–218. https://doi.org/10.1007/BF01908075
 
-Liu, F. T., Ting, K. M., & Zhou, Z.-H. (2008). Isolation Forest. *2008 Eighth
-IEEE International Conference on Data Mining*, 413-422.
+Liu, F. T., Ting, K. M., & Zhou, Z.-H. (2008). Isolation forest. En *2008 Eighth
+IEEE International Conference on Data Mining* (pp. 413–422). IEEE.
 https://doi.org/10.1109/ICDM.2008.17
 
 Meneses Yaranga, A. (2026). *Actividad de Aprendizaje Automático: detección de
@@ -901,22 +918,22 @@ Pedregosa, F., Varoquaux, G., Gramfort, A., Michel, V., Thirion, B., Grisel, O.,
 Blondel, M., Prettenhofer, P., Weiss, R., Dubourg, V., Vanderplas, J., Passos,
 A., Cournapeau, D., Brucher, M., Perrot, M., & Duchesnay, E. (2011).
 Scikit-learn: Machine learning in Python. *Journal of Machine Learning Research,
-12*, 2825-2830.
+12*, 2825–2830.
 
 Rousseeuw, P. J. (1987). Silhouettes: A graphical aid to the interpretation and
 validation of cluster analysis. *Journal of Computational and Applied
-Mathematics, 20*, 53-65. https://doi.org/10.1016/0377-0427(87)90125-7
+Mathematics, 20*, 53–65. https://doi.org/10.1016/0377-0427(87)90125-7
 
 Rousseeuw, P. J., & Van Driessen, K. (1999). A fast algorithm for the minimum
-covariance determinant estimator. *Technometrics, 41*(3), 212-223.
+covariance determinant estimator. *Technometrics, 41*(3), 212–223.
 https://doi.org/10.1080/00401706.1999.10485670
 
-Rubin, D. B. (1976). Inference and missing data. *Biometrika, 63*(3), 581-592.
+Rubin, D. B. (1976). Inference and missing data. *Biometrika, 63*(3), 581–592.
 https://doi.org/10.1093/biomet/63.3.581
 
 Tukey, J. W. (1977). *Exploratory data analysis*. Addison-Wesley.
 
 Ward, J. H. (1963). Hierarchical grouping to optimize an objective function.
-*Journal of the American Statistical Association, 58*(301), 236-244.
+*Journal of the American Statistical Association, 58*(301), 236–244.
 https://doi.org/10.1080/01621459.1963.10500845
 """)

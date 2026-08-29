@@ -127,7 +127,8 @@ for col in cat_texto:
     n_cat = df_bruto[col].nunique()
     print("  %-9s %5d categorias distintas  (%.1f %% de las filas)"
           % (col, n_cat, 100 * n_cat / len(df_bruto)))
-print("  La cardinalidad casi maxima las identifica como IDENTIFICADORES.")
+print("  SegFile toma casi un valor por fila; FileName y Date situan la")
+print("  procedencia del registro. Los tres son METADATOS, no descriptores.")
 
 # Categoricas codificadas como numeros. Tratarlas como continuas seria un error
 # conceptual, porque la media de NSP no significa nada.
@@ -154,10 +155,11 @@ RES["frec_nsp"] = df_bruto["NSP"].value_counts(dropna=False).sort_index().to_dic
 ''')
 
     md(r"""
-El análisis de las categóricas produce cuatro decisiones. `FileName`, `Date` y
-`SegFile` tienen una cardinalidad casi igual al número de filas, lo que las
-identifica como identificadores del registro y las descarta. `NSP` está muy
-desbalanceada, con un 77,8 % de normales, un 13,9 % de sospechosos y un 8,3 % de
+El análisis de las categóricas produce cuatro decisiones. `SegFile` toma 2 126
+valores distintos, prácticamente uno por fila, y `FileName` y `Date` no describen
+al feto sino la procedencia del registro: las tres son metadatos de trazabilidad
+y se descartan. `NSP` está muy
+desbalanceada, con un 77,7 % de normales, un 13,9 % de sospechosos y un 8,3 % de
 patológicos, y ese desbalance es lo que convierte al conjunto en un buen banco de
 pruebas para la detección de anomalías. `CLASS` reparte los datos en diez
 categorías con frecuencias de 53 a 579 casos. Y las diez indicadoras de `A` a
@@ -218,7 +220,7 @@ print("\nCorrelacion absoluta media entre pares: %.3f" % RES["corr_media_abs"])
 ''')
 
     md(r"""
-La matriz revela una redundancia clara y clínicamente interpretable. Un primer
+La Figura 1 revela una redundancia clara y clínicamente interpretable. Un primer
 bloque reúne `Mean`, `Median`, `Mode` y `LB`, con correlaciones de 0,71 a 0,95,
 siendo `Mean` y `Median` el par más redundante: las cuatro miden dónde se sitúa
 la frecuencia cardiaca y solo cambian de estimador.
@@ -295,12 +297,12 @@ RES["atipicos_univariantes"] = atipicos_por_var.head(8).to_dict()
 ''')
 
     md(r"""
-Los histogramas de la figura 2 confirman lo que anticipaban la asimetría y la
+Los histogramas de la Figura 2 confirman lo que anticipaban la asimetría y la
 curtosis: solo `LB`, `Mean`, `Mode` y `Median` son aproximadamente simétricas y
 el resto están fuertemente sesgadas a la derecha, con una masa enorme de ceros en
 los conteos como `DS`, `DP` o `Nzeros`.
 
-Los diagramas de caja de la figura 3 muestran que casi todas las variables tienen
+Los diagramas de caja de la Figura 3 muestran que casi todas las variables tienen
 puntos fuera de los bigotes, advertencia metodológica de primer orden: aplicar
 una regla univariante y eliminar toda fila con algún atípico perdería una
 fracción enorme del conjunto, y serían justo los casos clínicamente más

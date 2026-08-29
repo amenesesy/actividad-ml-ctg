@@ -58,7 +58,9 @@ minutos.
 La segunda reúne las librerías y fija la semilla aleatoria, detalle que no es
 menor: Isolation Forest, K-Means y el experimento de imputación son estocásticos
 y sin semilla fija darían cifras distintas en cada ejecución, con lo que ninguna
-conclusión sería verificable.
+conclusión sería verificable. Todos los algoritmos proceden de scikit-learn
+(Pedregosa et al., 2011), y el cuaderno completo, con estas mismas salidas, está
+publicado en un repositorio público (Meneses Yaranga, 2026).
 """)
 
     code(r'''
@@ -252,7 +254,9 @@ El archivo `CTG.csv` es el resultado de aplicar el sistema SisPorto 2.0
 (Ayres-de-Campos et al., 2000) a 2 126 trazados: cada fila es un segmento de
 registro y cada columna un descriptor automático. Tres obstetras etiquetaron
 además cada segmento con `CLASS`, el patrón morfológico en diez categorías, y
-`NSP`, el estado fetal en tres niveles: normal, sospechoso y patológico.
+`NSP`, el estado fetal en tres niveles: normal, sospechoso y patológico. El
+conjunto está depositado en el repositorio de aprendizaje automático de la
+Universidad de California en Irvine (Campos y Bernardes, 2000).
 
 ## 1.2 Por qué este conjunto se ajusta a la actividad
 
@@ -281,8 +285,12 @@ df_bruto = pd.read_csv(origen)
 
 print("Origen de los datos          :", origen)
 print("Dimensiones (filas, columnas):", df_bruto.shape)
-print("\nPrimeras 3 filas:")
-df_bruto.head(3)
+# Se imprimen las doce primeras columnas de las tres primeras filas. La tabla
+# completa tiene 40 columnas y no cabe a lo ancho: mostrarla entera obligaria a
+# desplazarse en horizontal. El resto de columnas queda documentado, una a una,
+# en el diccionario de la celda 1.2.
+print("\nPrimeras 3 filas (12 de las %d columnas):" % df_bruto.shape[1])
+print(df_bruto.iloc[:3, :12].to_string())
 ''')
 
     md(r"""
