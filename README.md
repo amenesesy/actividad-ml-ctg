@@ -33,13 +33,20 @@ pestaña del número de página, y la paleta institucional construida sobre el
 cian corporativo `#0098CD` y los grises `#333333` y `#777777`. Las figuras usan
 esa misma paleta.
 
-Las diecisiete celdas que ejecutan un análisis y devuelven un resultado numérico
-se reproducen en el informe como captura del cuaderno abierto en Google Colab,
-con el resaltado de sintaxis y el área de salida tal como los presenta el
-entorno. Las quince que dibujan una figura van compuestas como texto, porque su
-gráfico aparece a continuación en formato APA con su número, su título y su nota,
-y la captura solo lo duplicaría a un tamaño ilegible. Con ese reparto, y con la
-narrativa sintetizada, el informe cabe en las 40 páginas que fija el enunciado.
+Las treinta y dos celdas de código se reproducen en el informe como captura del
+cuaderno abierto en Google Colab, con el resaltado de sintaxis y el área de
+salida tal como los presenta el entorno. En las trece celdas que dibujan una
+figura la captura recoge el código y la salida de texto, y el gráfico va justo
+después en formato APA con su número, su título y su nota: así se ve a un tamaño
+legible y no aparece dos veces. La franja que ocupa cada gráfico dentro de su
+captura está anotada en `recorte.py`, comprobada una a una sobre la imagen. Con
+ese reparto, y con la narrativa sintetizada, el informe cabe en las 40 páginas
+que fija el enunciado.
+
+Tres capturas no alcanzan a mostrar toda la salida de su celda: en la 2.4 el
+área de resultados de Colab la recorta por altura, y en la 2.5 y la 5.3 la toma
+de pantalla no llegó al final. En esos tres casos el informe reproduce debajo de
+la captura el texto que falta, leído del cuaderno ya ejecutado.
 
 `ML_Actividad_CTG.ipynb` es el cuaderno ya ejecutado, con 60 celdas de las
 cuales 32 son de código, y conserva embebidas todas las salidas y los gráficos.
@@ -47,14 +54,16 @@ Las filas 2127 y 2128 del archivo original no son pacientes sino las filas de
 resumen de la hoja de cálculo: reproducen, respectivamente, el mínimo y el
 máximo de cada columna, y el cuaderno lo comprueba variable a variable.
 
-`capturas/` contiene las treinta y dos capturas de celda tomadas del cuaderno
-en Colab; el informe usa diecisiete.
+`capturas/` contiene las treinta y dos capturas de celda tomadas del cuaderno en
+Colab, y `capturas_recortadas/` las trece que el informe usa sin la franja del
+gráfico.
 `resultados.json` recoge los resultados numéricos que el cuaderno vuelca al
 terminar y `figuras/` contiene las quince figuras en PNG a su resolución
 original. `CTG.csv` es una copia local del conjunto de datos.
 
-Los scripts `nb_base.py`, `nb_parte1.py` a `nb_parte4.py`, `build_notebook.py` y
-`build_report.py` son la maquinaria que genera el cuaderno y el informe.
+Los scripts `nb_base.py`, `nb_parte1.py` a `nb_parte4.py`, `build_notebook.py`,
+`recorte.py` y `build_report.py` son la maquinaria que genera el cuaderno y el
+informe.
 
 ## Cómo se regenera todo
 
