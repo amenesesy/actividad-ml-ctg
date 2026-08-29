@@ -25,13 +25,21 @@ se descarga solo.
 ## Contenido del repositorio
 
 `Actividad_ML_CTG_Meneses.pdf` es el informe final. Tiene 40 páginas, está
-compuesto en Calibri 12 con interlineado 1,5 y contiene la narrativa completa,
+compuesto en Calibri 12 con un avance de línea de 18 puntos, vez y media el
+cuerpo de la letra, y contiene la narrativa completa,
 todo el código Python comentado, las salidas que produce y las quince figuras
 en formato APA. Reproduce la plantilla del enunciado: el encabezado de tres
 columnas con la asignatura, los datos del alumno y la fecha, el pie con la
 pestaña del número de página, y la paleta institucional construida sobre el
 cian corporativo `#0098CD` y los grises `#333333` y `#777777`. Las figuras usan
-esa misma paleta.
+esa misma paleta. La prosa va toda en negro y lo que en ella se resalta, los
+nombres de variable y de archivo, se marca con negrita monoespaciada; los
+enlaces y los DOI siguen siendo pulsables pero se imprimen en ese mismo negro.
+
+Las citas siguen la 7.ª edición de APA: las quince entradas de la lista de
+referencias están citadas en el cuerpo, las quince figuras llevan su llamada en
+el texto, los rangos de páginas usan raya corta y las dos ponencias en actas
+llevan la plantilla de congreso.
 
 Las treinta y dos celdas de código se reproducen en el informe como captura del
 cuaderno abierto en Google Colab, con el resaltado de sintaxis y el área de

@@ -582,7 +582,7 @@ estructura de correlaciones, decisivo para el análisis de componentes principal
 posterior: su error medio en la matriz es de 0,006, cuatro veces menor que el de
 la media y seis veces menor que el de la moda.
 
-La figura 4 muestra un aspecto que el RMSE no captura. La media, en cian claro, y
+La Figura 4 muestra un aspecto que el RMSE no captura. La media, en cian claro, y
 la mediana, en rojo, crean un pico artificial en el valor central de `ASTV` y de
 `MSTV` que no existe en la distribución real. La moda, en gris, deforma el pico
 de `LB` y de `MSTV` al concentrar masa en el valor más frecuente. La curva de

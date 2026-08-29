@@ -48,7 +48,7 @@ DIR_FIGURAS = pathlib.Path("figuras")
 DIR_CAPTURAS = pathlib.Path("capturas")
 DIR_RECORTADAS = pathlib.Path("capturas_recortadas")
 
-ANCHO_CAPTURA = 14.6 * cm
+ANCHO_CAPTURA = 14.2 * cm
 
 # Titulo de cada celda tal como se compone en el rotulo del listado. En el
 # cuaderno los comentarios van sin tildes, porque asi se escriben los
@@ -216,6 +216,7 @@ def formato_inline(texto):
     # puede partirse y dejar el "2" al final de una linea y el "126" al principio
     # de la siguiente.
     texto = re.sub(r"(?<=\d) (?=\d{3}(?!\d))", " ", texto)
+    texto = re.sub(r"(?<=\d) (?=%)", " ", texto)
     # Codigo en linea `x` -> monoespaciada en negrita, del mismo negro que el
     # resto de la prosa: el resalte lo da el trazo y no un color aparte.
     texto = re.sub(r"`([^`]+)`",

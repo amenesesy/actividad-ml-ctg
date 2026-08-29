@@ -649,6 +649,15 @@ guardar("fig_clustering_comparacion")
 RES["tabla_clustering"] = tabla_clustering.reset_index().to_dict("records")
 ''')
 
+    md(r"""
+La Figura 15 pone las tres particiones sobre el mismo plano y explica de un
+vistazo la tabla: K-Means y Ward reparten la nube en tres regiones contiguas,
+mientras que DBSCAN deja el 88,7 % de los puntos en un solo grupo. Al leer la
+tabla conviene una cautela: la silueta de DBSCAN, 0,387, está calculada sobre las
+nueve componentes en las que se ajustó el algoritmo, de modo que no es comparable
+con las de K-Means y Ward, medidas sobre las veinte variables.
+""")
+
     # =========================================== 7. VENTAJAS Y DESVENTAJAS
     md(r"""
 # 7. Ventajas y desventajas de cada modelo
